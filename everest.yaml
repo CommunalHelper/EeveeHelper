@@ -7,3 +7,5 @@
   OptionalDependencies:
     - Name: AdventureHelper
       Version: 1.5.1
+    - Name: StyleMaskHelper
+      Version: 1.2.0

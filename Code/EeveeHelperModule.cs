@@ -20,14 +20,18 @@ namespace Celeste.Mod.EeveeHelper {
             Instance = this;
         }
 
+        public override Type SessionType => typeof(EeveeHelperSession);
+        public static EeveeHelperSession Session => (EeveeHelperSession)Instance._Session;
+
         public static bool AdventureHelperLoaded { get; set; }
-        public static bool CollabUtils2Loaded { get; set; }
+        public static bool StyleMaskHelperLoaded { get; set; }
 
         public override void Load() {
             MiscHooks.Load();
             RoomChest.Load();
             HoldableTiles.Load();
             PatientBooster.Load();
+            CoreZone.Load();
 
             Everest.Events.Level.OnLoadBackdrop += this.OnLoadBackdrop;
 
@@ -54,12 +58,17 @@ namespace Celeste.Mod.EeveeHelper {
             RoomChest.Unload();
             HoldableTiles.Unload();
             PatientBooster.Unload();
+            CoreZone.Unload();
         }
 
         public override void Initialize() {
             AdventureHelperLoaded = Everest.Loader.DependencyLoaded(new EverestModuleMetadata {
                 Name = "AdventureHelper",
                 VersionString = "1.5.1"
+            });
+            StyleMaskHelperLoaded = Everest.Loader.DependencyLoaded(new EverestModuleMetadata {
+                Name = "StyleMaskHelper",
+                VersionString = "1.2.0"
             });
 
             if (AdventureHelperLoaded) {

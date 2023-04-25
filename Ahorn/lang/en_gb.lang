@@ -169,3 +169,21 @@ placements.entities.EeveeHelper/SMWPlatform.tooltips.startDelay=The delay before
 
 # Room Chest
 placements.entities.EeveeHelper/RoomChest.tooltips.room=Name of the room this chest should take you to.
+
+# Core Zone
+placements.entities.EeveeHelper/CoreZone.tooltips.zoneId=(Optional) Makes this Core Zone's mode affected by matching Core Zone Toggles instead of the level's core mode.
+placements.entities.EeveeHelper/CoreZone.tooltips.coreMode=Determines what this zone's core mode should be.\n- Current: Matching the level's core mode\n- Inverted: Opposite of the level's core mode\n- Hot: Always fire mode\n- Cold: Always ice mode\n- None: No core mode
+placements.entities.EeveeHelper/CoreZone.tooltips.colorGradeMask=Whether this Core Zone creates a matching hot/cold Color Grade Mask. Requires Style Mask Helper to work!
+placements.entities.EeveeHelper/CoreZone.tooltips.stylegroundMask=Whether this Core Zone creates a matching Styleground Mask (tag switches between "hot", "cold", and "nocore"). Requires Style Mask Helper to work!
+
+# Core Zone Toggle
+placements.entities.EeveeHelper/CoreZoneToggle.tooltips.zoneId=The zone group for this toggle to affect (Core Zones with the same Zone Id)
+placements.entities.EeveeHelper/CoreZoneToggle.tooltips.onlyFire=Whether the switch can only turn the core mode to fire.
+placements.entities.EeveeHelper/CoreZoneToggle.tooltips.onlyIce=Whether the switch can only turn the core mode to ice.
+placements.entities.EeveeHelper/CoreZoneToggle.tooltips.persistent=Whether the core mode persists after death instead of resetting to initial room entry state.
+
+# Core Zone Start Controller
+placements.entities.EeveeHelper/CoreZoneStartController.tooltips.zoneId=The zone group for this controller to affect on room start (Core Zones with the same Zone Id)
+placements.entities.EeveeHelper/CoreZoneStartController.tooltips.coreMode=The core mode the specified zone group should be set to on room start.
+placements.entities.EeveeHelper/CoreZoneStartController.tooltips.startOnly=Whether the core mode is only set for the zone group if it hasn't been set before.
+placements.entities.EeveeHelper/CoreZoneStartController.tooltips.persistent=Whether the core mode persists after death instead of resetting to initial room entry state.

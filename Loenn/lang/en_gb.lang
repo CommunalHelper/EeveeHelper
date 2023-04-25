@@ -197,3 +197,27 @@ entities.EeveeHelper/RoomChestExit.placements.name.default=Room Chest Exit (WIP)
 # Patient Booster
 entities.EeveeHelper/PatientBooster.placements.name.default=Patient Booster
 entities.EeveeHelper/PatientBooster.placements.name.red=Patient Booster (Red)
+
+# Core Zone
+entities.EeveeHelper/CoreZone.placements.name.current=Core Zone (Current)
+entities.EeveeHelper/CoreZone.placements.name.inverted=Core Zone (Inverted)
+entities.EeveeHelper/CoreZone.placements.name.hot=Core Zone (Hot)
+entities.EeveeHelper/CoreZone.placements.name.cold=Core Zone (Cold)
+entities.EeveeHelper/CoreZone.attributes.description.zoneId=(Optional) Makes this Core Zone's mode affected by matching Core Zone Toggles instead of the level's core mode.
+entities.EeveeHelper/CoreZone.attributes.description.coreMode=Determines what this zone's core mode should be.\n- Current: Matching the level's core mode\n- Inverted: Opposite of the level's core mode\n- Hot: Always fire mode\n- Cold: Always ice mode\n- None: No core mode
+entities.EeveeHelper/CoreZone.attributes.description.colorGradeMask=Whether this Core Zone creates a matching hot/cold Color Grade Mask. Requires Style Mask Helper to work!
+entities.EeveeHelper/CoreZone.attributes.description.stylegroundMask=Whether this Core Zone creates a matching Styleground Mask (tag switches between "hot", "cold", and "nocore"). Requires Style Mask Helper to work!
+
+# Core Zone Toggle
+entities.EeveeHelper/CoreZoneToggle.placements.name.default=Core Zone Toggle
+entities.EeveeHelper/CoreZoneToggle.attributes.description.zoneId=The zone group for this toggle to affect (Core Zones with the same Zone Id)
+entities.EeveeHelper/CoreZoneToggle.attributes.description.onlyFire=Whether the switch can only turn the core mode to fire.
+entities.EeveeHelper/CoreZoneToggle.attributes.description.onlyIce=Whether the switch can only turn the core mode to ice.
+entities.EeveeHelper/CoreZoneToggle.attributes.description.persistent=Whether the core mode persists after death instead of resetting to initial room entry state.
+
+# Core Zone Start Controller
+entities.EeveeHelper/CoreZoneStartController.placements.name.default=Core Zone Start Controller
+entities.EeveeHelper/CoreZoneStartController.attributes.description.zoneId=The zone group for this controller to affect on room start (Core Zones with the same Zone Id)
+entities.EeveeHelper/CoreZoneStartController.attributes.description.coreMode=The core mode the specified zone group should be set to on room start.
+entities.EeveeHelper/CoreZoneStartController.attributes.description.startOnly=Whether the core mode is only set for the zone group if it hasn't been set before.
+entities.EeveeHelper/CoreZoneStartController.attributes.description.persistent=Whether the core mode persists after death instead of resetting to initial room entry state.

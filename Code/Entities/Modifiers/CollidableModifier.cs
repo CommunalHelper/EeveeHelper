@@ -110,7 +110,7 @@ namespace Celeste.Mod.EeveeHelper.Entities.Modifiers {
             Hazardous
         }
 
-        public class Solidifier : Solid {
+        public sealed class Solidifier : Solid {
             public Entity Entity;
 
             public Solidifier(Entity entity) : base(EeveeUtils.GetPosition(entity), 1f, 1f, false) {

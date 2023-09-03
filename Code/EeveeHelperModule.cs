@@ -25,6 +25,7 @@ namespace Celeste.Mod.EeveeHelper {
 
         public static bool AdventureHelperLoaded { get; set; }
         public static bool StyleMaskHelperLoaded { get; set; }
+        public static bool SpeedrunToolLoaded { get; set; }
 
         public override void Load() {
             MiscHooks.Load();
@@ -62,6 +63,8 @@ namespace Celeste.Mod.EeveeHelper {
         }
 
         public override void Initialize() {
+            RoomChest.Initialize();
+
             AdventureHelperLoaded = Everest.Loader.DependencyLoaded(new EverestModuleMetadata {
                 Name = "AdventureHelper",
                 VersionString = "1.5.1"
@@ -70,10 +73,16 @@ namespace Celeste.Mod.EeveeHelper {
                 Name = "StyleMaskHelper",
                 VersionString = "1.2.0"
             });
+            SpeedrunToolLoaded = Everest.Loader.DependencyLoaded(new EverestModuleMetadata {
+                Name = "SpeedrunTool",
+                VersionString = "3.21.0"
+            });
 
-            if (AdventureHelperLoaded) {
+            if (AdventureHelperLoaded)
                 AdventureHelperCompat.Initialize();
-            }
+
+            if (SpeedrunToolLoaded)
+                SpeedrunToolCompat.Initialize();
         }
 
         private Backdrop OnLoadBackdrop(MapData map, BinaryPacker.Element child, BinaryPacker.Element above) {

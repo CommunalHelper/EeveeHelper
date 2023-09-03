@@ -44,5 +44,17 @@ namespace Celeste.Mod.EeveeHelper {
                 newData.Values = new Dictionary<string, object>(data.Values);
             return newData;
         }
+
+        public static T GetValueOfType<T>(Dictionary<Type, T> dict, Type type) {
+            var success = dict.TryGetValue(type, out T value);
+
+            if (success)
+                return value;
+
+            if (type.BaseType == null)
+                return default(T);
+
+            return GetValueOfType(dict, type.BaseType);
+        }
     }
 }

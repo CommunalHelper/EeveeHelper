@@ -2,10 +2,10 @@ module EeveeHelperRoomChestExit
 
 using ..Ahorn, Maple
 
-@mapdef Entity "EeveeHelper/RoomChestExit" RoomChestExit(x::Integer, y::Integer, width::Integer=8, height::Integer=8)
+@mapdef Entity "EeveeHelper/RoomChestExit" RoomChestExit(x::Integer, y::Integer, width::Integer=8, height::Integer=8, visible::Bool=false)
 
 const placements = Ahorn.PlacementDict(
-    "Room Chest Exit (WIP) (Eevee Helper)" => Ahorn.EntityPlacement(
+    "Room Chest Exit (Eevee Helper)" => Ahorn.EntityPlacement(
         RoomChestExit,
         "rectangle"
     ),

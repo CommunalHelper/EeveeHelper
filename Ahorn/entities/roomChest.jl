@@ -2,10 +2,10 @@ module EeveeHelperRoomChest
 
 using ..Ahorn, Maple
 
-@mapdef Entity "EeveeHelper/RoomChest" RoomChest(x::Integer, y::Integer, room::String="")
+@mapdef Entity "EeveeHelper/RoomChest" RoomChest(x::Integer, y::Integer, room::String="", exitOnDeath::Bool=false)
 
 const placements = Ahorn.PlacementDict(
-    "Room Chest (WIP) (Eevee Helper)" => Ahorn.EntityPlacement(
+    "Room Chest (Eevee Helper)" => Ahorn.EntityPlacement(
         RoomChest
     )
 )

@@ -169,6 +169,10 @@ placements.entities.EeveeHelper/SMWPlatform.tooltips.startDelay=The delay before
 
 # Room Chest
 placements.entities.EeveeHelper/RoomChest.tooltips.room=Name of the room this chest should take you to.
+placements.entities.EeveeHelper/RoomChest.tooltips.exitOnDeath=Whether dying should take you back out of this room chest.\nChains until you reach a chest without Exit On Death enabled, or until you exit all room chests.
+
+# Room Chest Exit
+placements.entities.EeveeHelper/RoomChestExit.tooltips.visible=Whether the exit will be visible as a transparent red rectangle.
 
 # Core Zone
 placements.entities.EeveeHelper/CoreZone.tooltips.zoneId=(Optional) Makes this Core Zone's mode affected by matching Core Zone Toggles instead of the level's core mode.

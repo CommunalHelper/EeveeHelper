@@ -7,6 +7,7 @@ local roomChest = {
         name = "default",
         data = {
             room = "",
+            exitOnDeath = false,
         }
     },
     sprite = function (room, entity)

@@ -9,6 +9,7 @@ local roomChestExit = {
         data = {
             width = 8,
             height = 8,
+            visible = true,
         }
     }
 }

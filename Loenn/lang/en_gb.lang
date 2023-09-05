@@ -188,11 +188,13 @@ entities.EeveeHelper/SMWPlatform.attributes.description.moveOnce=Whether the pla
 entities.EeveeHelper/SMWPlatform.attributes.description.startDelay=The delay before the platform starts moving when activated. Only applies if the platform needs to be started with a touch/flag.
 
 # Room Chest
-entities.EeveeHelper/RoomChest.placements.name.default=Room Chest (WIP)
+entities.EeveeHelper/RoomChest.placements.name.default=Room Chest
 entities.EeveeHelper/RoomChest.attributes.description.room=Name of the room this chest should take you to.
+entities.EeveeHelper/RoomChest.attributes.description.exitOnDeath=Whether dying should take you back out of this room chest.\nChains until you reach a chest without Exit On Death enabled, or until you exit all room chests.
 
 # Room Chest Exit
-entities.EeveeHelper/RoomChestExit.placements.name.default=Room Chest Exit (WIP)
+entities.EeveeHelper/RoomChestExit.placements.name.default=Room Chest Exit
+entities.EeveeHelper/RoomChestExit.attributes.description.visible=Whether the exit will be visible as a transparent red rectangle.
 
 # Patient Booster
 entities.EeveeHelper/PatientBooster.placements.name.default=Patient Booster

@@ -6,18 +6,27 @@ using MonoMod.Cil;
 using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
+using System.Xml.Serialization;
 
 namespace Celeste.Mod.EeveeHelper.Entities {
     [CustomEntity("EeveeHelper/RoomChest")]
     public class RoomChest : Actor {
-        public static Stack<List<Entity>> LastEntities = new Stack<List<Entity>>();
-        public static Stack<RoomChest> LastChests = new Stack<RoomChest>();
-        public static Stack<string> LastRooms = new Stack<string>();
+        public static Stack<List<Entity>> LastEntities = new();
+        public static Stack<RoomChest> LastChests = new();
+        public static Stack<string> LastRooms = new();
+        public static Stack<Vector2?> LastSpawnPoints = new();
+
+        public static byte[] OriginalSession;
+        public static Dictionary<string, byte[]> OriginalModSessions = new();
+
+        public static Dictionary<Type, Func<Holdable, List<Entity>>> HoldableEntityGetters = new();
 
         public static bool NoEntityCallbacks;
 
         public string Room;
+        public bool ExitOnDeath;
 
         public Vector2 Speed;
         public Holdable Hold;
@@ -29,12 +38,13 @@ namespace Celeste.Mod.EeveeHelper.Entities {
         private Vector2 prevLiftSpeed;
         private float noGravityTimer;
         private bool playerWasAbove;
-        private Player playerInside;
+        private bool playerInside;
         private float squishTimer;
         private bool closed;
 
         public RoomChest(EntityData data, Vector2 offset) : base(data.Position + offset) {
             Room = data.Attr("room");
+            ExitOnDeath = data.Bool("exitOnDeath", false);
 
             Depth = 5;
             Collider = new Hitbox(16f, 8f, -8f, -8f);
@@ -62,6 +72,13 @@ namespace Celeste.Mod.EeveeHelper.Entities {
             scene.Add(ChestLid = new ChestExtension(this, Position));
         }
 
+        public override void Removed(Scene scene) {
+            base.Removed(scene);
+
+            if (ChestLid != null && ChestLid.Scene == scene)
+                scene.Remove(ChestLid);
+        }
+
         public override void Update() {
             base.Update();
 
@@ -76,26 +93,26 @@ namespace Celeste.Mod.EeveeHelper.Entities {
             }
 
             var player = level.Tracker.GetEntity<Player>();
-            var wasInside = playerInside != null;
+            var wasInside = playerInside;
             var wasClosed = closed;
             if (player != null) {
                 var inside = !Hold.IsHeld && player.Left >= Left - 2f && player.Right <= Right + 2f && player.Bottom >= Top && player.Bottom <= Bottom;
-                if (playerInside == null && inside && playerWasAbove) {
+                if (!playerInside && inside && playerWasAbove) {
                     player.Left = Math.Max(player.Left, Left);
                     player.Right = Math.Min(player.Right, Right);
-                    playerInside = player;
+                    playerInside = true;
                 } else if (!inside) {
-                    playerInside = null;
+                    playerInside = false;
                 }
                 playerWasAbove = player.Bottom <= Top;
             } else {
                 playerWasAbove = false;
             }
 
-            if (playerInside != null) {
+            if (playerInside) {
                 Depth = -5;
                 ChestLid.Collidable = true;
-                closed = playerInside.Ducking || (playerInside.Holding != null && !Exiting);
+                closed = player.Ducking || (player.Holding != null && !Exiting);
             } else {
                 Depth = 5;
                 ChestLid.Collidable = false;
@@ -109,11 +126,15 @@ namespace Celeste.Mod.EeveeHelper.Entities {
                 closedImage.Visible = true;
                 closedImage.Scale = new Vector2(1.2f, 0.8f);
                 player.Visible = false;
-                if (player.Holding != null)
+                if (player.Holding != null) {
                     player.Holding.Entity.Visible = false;
+                    foreach (var entity in GetHeldEntityAttachments(player.Holding)) {
+                        entity.Visible = false;
+                    }
+                }
                 squishTimer = 0.05f;
                 if (!string.IsNullOrEmpty(Room)) {
-                    if (playerInside.Ducking)
+                    if (player.Ducking)
                         ChestLid.TopSolid = true;
                     ChangeRoom();
                 }
@@ -124,8 +145,12 @@ namespace Celeste.Mod.EeveeHelper.Entities {
                 bodyImage.Scale = new Vector2(0.8f, 1.2f);
                 ChestLid.Scale = new Vector2(0.8f, 1.2f);
                 player.Visible = true;
-                if (player.Holding != null)
+                if (player.Holding != null) {
                     player.Holding.Entity.Visible = true;
+                    foreach (var entity in GetHeldEntityAttachments(player.Holding)) {
+                        entity.Visible = true;
+                    }
+                }
                 squishTimer = 0.05f;
             }
 
@@ -187,18 +212,31 @@ namespace Celeste.Mod.EeveeHelper.Entities {
             }
             Hold.CheckAgainstColliders();
 
-            ChestLid.MoveTo(Position);
+            if (ChestLid.Scene != null)
+                ChestLid.MoveTo(Position);
         }
 
         private void ChangeRoom() {
             var level = SceneAs<Level>();
+            var player = level.Tracker.GetEntity<Player>();
+
+            player.StateMachine.State = Player.StDummy;
+
             Add(Alarm.Create(Alarm.AlarmMode.Oneshot, () => {
                 level.DoScreenWipe(false, () => {
-                    var player = level.Tracker.GetEntity<Player>();
                     var dashes = player.Dashes;
+
+                    if (LastRooms.Count == 0) {
+                        // Save the original session to revert to when the player saves and quits
+                        OriginalSession = UserIO.Serialize(level.Session);
+
+                        foreach (var module in Everest.Modules)
+                            OriginalModSessions.Add(module.Metadata.Name, module.SerializeSession(SaveData.Instance.FileSlot));
+                    }
 
                     LastChests.Push(this);
                     LastRooms.Push(level.Session.Level);
+                    LastSpawnPoints.Push(level.Session.RespawnPoint);
 
                     player.CleanUpTriggers();
 
@@ -206,6 +244,10 @@ namespace Celeste.Mod.EeveeHelper.Entities {
                     if (player.Holding != null) {
                         held = player.Holding;
                         level.Remove(player.Holding.Entity);
+
+                        foreach (var entity in GetHeldEntityAttachments(held))
+                            level.Remove(entity);
+
                         player.Holding = null;
                     }
 
@@ -230,12 +272,21 @@ namespace Celeste.Mod.EeveeHelper.Entities {
                     level.LoadLevel(Player.IntroTypes.Transition);
 
                     level.Add(player);
+                    level.Entities.UpdateLists();
+
                     if (held != null) {
                         level.Add(held.Entity);
-                        player.Holding = held;
                         held.Entity.Visible = true;
+
+                        foreach (var entity in GetHeldEntityAttachments(held)) {
+                            level.Add(entity);
+                            entity.Visible = true;
+                        }
+
+                        player.Holding = held;
                     }
-                    level.Entities.UpdateLists();
+
+                    player.StateMachine.State = Player.StNormal;
 
                     player.Visible = true;
                     player.Position = level.DefaultSpawnPoint;
@@ -276,7 +327,9 @@ namespace Celeste.Mod.EeveeHelper.Entities {
 
         private void OnCarry(Vector2 target) {
             Position = target;
-            ChestLid.MoveTo(ExactPosition);
+
+            if (ChestLid.Scene != null)
+                ChestLid.MoveTo(ExactPosition);
         }
 
         private void OnPickup() {
@@ -298,10 +351,12 @@ namespace Celeste.Mod.EeveeHelper.Entities {
         }
 
         public static void DeactivateEntities(Level level) {
+            var player = level.Tracker.GetEntity<Player>();
+
             var deactivated = new List<Entity>();
             foreach (var entity in level.GetEntitiesExcludingTagMask(Tags.Global)) {
                 level.Remove(entity);
-                if (IsEntitySaved(entity))
+                if (IsEntitySaved(entity) && entity != player)
                     deactivated.Add(entity);
             }
             LastEntities.Push(deactivated);
@@ -333,28 +388,115 @@ namespace Celeste.Mod.EeveeHelper.Entities {
 
         public static bool IsEntitySaved(Entity entity) => !(entity is Trigger);
 
+        public static List<Entity> GetHeldEntityAttachments(Holdable holdable) {
+            var getter = EeveeUtils.GetValueOfType(HoldableEntityGetters, holdable.Entity.GetType());
+
+            if (getter == null)
+                return new List<Entity>();
+
+            return getter(holdable);
+        }
+
 
         private static MethodInfo m_Scene_SetActualDepth = typeof(Scene).GetMethod("SetActualDepth", BindingFlags.NonPublic | BindingFlags.Instance);
         private static MethodInfo m_Tracker_ComponentAdded = typeof(Tracker).GetMethod("ComponentAdded", BindingFlags.NonPublic | BindingFlags.Instance);
         private static MethodInfo m_Tracker_ComponentRemoved = typeof(Tracker).GetMethod("ComponentRemoved", BindingFlags.NonPublic | BindingFlags.Instance);
 
+        public static void Initialize() {
+            HoldableEntityGetters.Add(typeof(RoomChest), (holdable) => {
+                var chest = holdable.Entity as RoomChest;
+
+                return new List<Entity>() {
+                    chest.ChestLid
+                };
+            });
+
+            HoldableEntityGetters.Add(typeof(HoldableTiles), (holdable) => {
+                var tiles = holdable.Entity as HoldableTiles;
+
+                return new List<Entity>() {
+                    tiles.Solid
+                };
+            });
+
+            HoldableEntityGetters.Add(typeof(HoldableContainer), (holdable) => {
+                var entity = holdable.Entity as HoldableContainer;
+
+                return entity.Container.GetEntities();
+            });
+        }
+
         public static void Load() {
             On.Celeste.Level.LoadLevel += Level_LoadLevel;
+            On.Celeste.Level.End += Level_End;
+            On.Celeste.SaveData.BeforeSave += SaveData_BeforeSave;
+            On.Celeste.Player.Die += Player_Die;
             IL.Monocle.EntityList.UpdateLists += EntityList_UpdateLists;
         }
 
         public static void Unload() {
             On.Celeste.Level.LoadLevel -= Level_LoadLevel;
+            On.Celeste.Level.End -= Level_End;
+            On.Celeste.SaveData.BeforeSave -= SaveData_BeforeSave;
+            On.Celeste.Player.Die -= Player_Die;
             IL.Monocle.EntityList.UpdateLists -= EntityList_UpdateLists;
         }
 
         private static void Level_LoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level self, Player.IntroTypes playerIntro, bool isFromLoader) {
             if (isFromLoader) {
-                LastEntities.Clear();
-                LastChests.Clear();
-                LastRooms.Clear();
+                OriginalSession = null;
+                OriginalModSessions.Clear();
             }
+
             orig(self, playerIntro, isFromLoader);
+        }
+
+        private static void Level_End(On.Celeste.Level.orig_End orig, Level self) {
+            orig(self);
+
+            LastEntities.Clear();
+            LastChests.Clear();
+            LastRooms.Clear();
+            LastSpawnPoints.Clear();
+        }
+
+        private static void SaveData_BeforeSave(On.Celeste.SaveData.orig_BeforeSave orig, SaveData self) {
+            if (OriginalSession != null) {
+                // If currently inside a room chest, load session from before entering the first chest
+                using (var stream = new MemoryStream(OriginalSession)) {
+                    self.CurrentSession_Safe = (Session)(new XmlSerializer(typeof(Session)).Deserialize(stream));
+                }
+                foreach (var module in Everest.Modules) {
+                    if (OriginalModSessions.TryGetValue(module.Metadata.Name, out var data)) {
+                        module.DeserializeSession(self.FileSlot, data);
+                    }
+                }
+            }
+
+            orig(self);
+        }
+
+        private static PlayerDeadBody Player_Die(On.Celeste.Player.orig_Die orig, Player self, Vector2 direction, bool evenIfInvincible, bool registerDeathInStats) {
+            var level = self.SceneAs<Level>();
+
+            var body = orig(self, direction, evenIfInvincible, registerDeathInStats);
+
+            if (body != null) {
+                while (LastChests.Count > 0 && LastChests.Peek().ExitOnDeath) {
+                    level.Session.Level = LastRooms.Pop();
+                    level.Session.RespawnPoint = LastSpawnPoints.Pop();
+
+                    LastChests.Pop();
+                    LastEntities.Pop();
+
+                    if (LastChests.Count == 0) {
+                        OriginalSession = null;
+                        OriginalModSessions.Clear();
+                    }
+                }
+            }
+
+            return body;
         }
 
         private static void EntityList_UpdateLists(MonoMod.Cil.ILContext il) {

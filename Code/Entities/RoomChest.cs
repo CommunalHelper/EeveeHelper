@@ -72,6 +72,13 @@ namespace Celeste.Mod.EeveeHelper.Entities {
             scene.Add(ChestLid = new ChestExtension(this, Position));
         }
 
+        public override void Removed(Scene scene) {
+            base.Removed(scene);
+
+            if (ChestLid != null && ChestLid.Scene == scene)
+                scene.Remove(ChestLid);
+        }
+
         public override void Update() {
             base.Update();
 

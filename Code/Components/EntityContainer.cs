@@ -15,17 +15,20 @@ namespace Celeste.Mod.EeveeHelper.Components {
         public enum ContainMode {
             FlagChanged,
             RoomStart,
-            Always
+            Always,
+            DelayedRoomStart
         }
 
-        public List<IEntityHandler> Contained = new List<IEntityHandler>();
-        public Dictionary<Entity, List<IEntityHandler>> HandlersFor = new Dictionary<Entity, List<IEntityHandler>>();
-        public List<Tuple<string, int>> Blacklist;
-        public List<Tuple<string, int>> Whitelist;
-        public ContainMode Mode;
+        public List<IEntityHandler> Contained = new();
+        public Dictionary<Entity, List<IEntityHandler>> HandlersFor = new();
+        public List<Tuple<string, int>> Blacklist = new();
+        public List<Tuple<string, int>> Whitelist = new();
+        public ContainMode Mode = ContainMode.RoomStart;
         public string ContainFlag;
         public bool NotFlag;
         public bool ForceStandardBehavior;
+        public bool IgnoreContainerBounds;
+        public bool WhitelistAll;
 
         public Func<Entity, bool> IsValid;
         public Func<Entity, bool> DefaultIgnored;
@@ -35,18 +38,23 @@ namespace Celeste.Mod.EeveeHelper.Components {
         public bool Attached;
         public bool CollideWithContained;
 
-        private List<IEntityHandler> containedSaved = new List<IEntityHandler>();
+        private List<IEntityHandler> containedSaved = new();
+        private bool updatedOnce;
 
         public EntityContainer() : base(true, true) { }
 
         public EntityContainer(EntityData data) : this() {
-            Whitelist = ParseList(data.Attr("whitelist"));
+            if (data.Attr("whitelist").ToLower() == "all")
+                WhitelistAll = true;
+            else
+                Whitelist = ParseList(data.Attr("whitelist"));
             Blacklist = ParseList(data.Attr("blacklist"));
             Mode = data.Enum("containMode", ContainMode.FlagChanged);
             var flag = EeveeUtils.ParseFlagAttr(data.Attr("containFlag"));
             ContainFlag = flag.Item1;
             NotFlag = flag.Item2;
             ForceStandardBehavior = data.Bool("forceStandardBehavior", true);
+            IgnoreContainerBounds = data.Bool("ignoreContainerBounds");
         }
 
         public override void EntityAwake() {
@@ -54,8 +62,10 @@ namespace Celeste.Mod.EeveeHelper.Components {
 
             Attached = string.IsNullOrEmpty(ContainFlag) || SceneAs<Level>().Session.GetFlag(ContainFlag) != NotFlag;
 
-            if (Attached)
+            if (Attached && Mode != ContainMode.DelayedRoomStart)
                 AttachInside(true);
+
+            updatedOnce = false;
         }
 
         public override void Update() {
@@ -63,6 +73,16 @@ namespace Celeste.Mod.EeveeHelper.Components {
             Cleanup();
 
             var newAttached = string.IsNullOrEmpty(ContainFlag) || SceneAs<Level>().Session.GetFlag(ContainFlag) != NotFlag;
+
+            if (!updatedOnce) {
+                if (newAttached && Mode == ContainMode.DelayedRoomStart) {
+                    Attached = newAttached;
+
+                    AttachInside(true);
+                }
+
+                updatedOnce = true;
+            }
 
             if (Mode != ContainMode.Always) {
                 if (newAttached != Attached) {
@@ -151,8 +171,10 @@ namespace Celeste.Mod.EeveeHelper.Components {
         protected virtual bool WhitelistCheck(Entity entity) {
             if (Blacklist.Any(pair => pair.Item1 == entity.GetType().Name))
                 return false;
-            if (Whitelist.Count == 0)
-                return !((DefaultIgnored?.Invoke(entity) ?? false) || entity is Player || entity is SolidTiles || entity is BackgroundTiles || entity is Decal || entity is Trigger);
+            if (WhitelistAll)
+                return true;
+            else if (Whitelist.Count == 0)
+                return !((DefaultIgnored?.Invoke(entity) ?? false) || entity is Player || entity is SolidTiles || entity is BackgroundTiles || entity is Decal || entity is Trigger || entity is WindController);
             else
                 return Whitelist.Any(pair => pair.Item1 == entity.GetType().Name);
         }
@@ -160,14 +182,14 @@ namespace Celeste.Mod.EeveeHelper.Components {
         protected virtual bool WhitelistCheckCount(Entity entity, int count) {
             if (Blacklist.Any(pair => pair.Item1 == entity.GetType().Name && (pair.Item2 == -1 || count == pair.Item2)))
                 return false;
-            if (Whitelist.Count == 0)
+            if (WhitelistAll || Whitelist.Count == 0)
                 return true;
             else
                 return Whitelist.Any(pair => pair.Item1 == entity.GetType().Name && (pair.Item2 == -1 || count == pair.Item2));
         }
 
         protected virtual void AttachInside(bool first = false) {
-            if (first || Mode != ContainMode.RoomStart) {
+            if (first || (Mode != ContainMode.RoomStart && Mode != ContainMode.DelayedRoomStart)) {
                 var counts = new Dictionary<Type, int>();
                 foreach (var entity in Scene.Entities) {
                     if (entity != Entity && WhitelistCheck(entity) && (IsValid?.Invoke(entity) ?? true)) {
@@ -177,7 +199,7 @@ namespace Celeste.Mod.EeveeHelper.Components {
                         var anyInside = false;
                         var handlers = EntityHandler.CreateAll(entity, this, ForceStandardBehavior);
                         foreach (var handler in handlers) {
-                            if (handler.IsInside(this)) {
+                            if (IgnoreContainerBounds || handler.IsInside(this)) {
                                 anyInside = true;
 
                                 if ((Mode != ContainMode.Always || !Contained.Contains(handler)) && WhitelistCheckCount(entity, counts[entity.GetType()] + 1)) {
@@ -203,7 +225,7 @@ namespace Celeste.Mod.EeveeHelper.Components {
 
         protected virtual void DetachAll() {
             var lastContained = new List<IEntityHandler>(Contained);
-            if (Mode == ContainMode.RoomStart)
+            if (Mode == ContainMode.RoomStart || Mode == ContainMode.DelayedRoomStart)
                 containedSaved = lastContained;
 
             foreach (var handler in lastContained) {
@@ -215,7 +237,7 @@ namespace Celeste.Mod.EeveeHelper.Components {
         protected virtual void DetachOutside() {
             var toRemove = new List<IEntityHandler>();
             foreach (var handler in Contained) {
-                if (!handler.IsInside(this)) {
+                if (!IgnoreContainerBounds && !handler.IsInside(this)) {
                     toRemove.Add(handler);
                 }
             }
@@ -233,6 +255,9 @@ namespace Celeste.Mod.EeveeHelper.Components {
         internal static FieldInfo f_Decal_textures = typeof(Decal).GetField("textures", BindingFlags.NonPublic | BindingFlags.Instance);
 
         public bool CheckCollision(Entity entity) {
+            if (IgnoreContainerBounds)
+                return true;
+
             if (entity.Collider != null) {
                 var collidable = entity.Collidable;
                 var parentCollidable = Entity.Collidable;

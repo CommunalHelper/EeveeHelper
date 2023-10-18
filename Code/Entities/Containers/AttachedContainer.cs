@@ -34,6 +34,7 @@ namespace Celeste.Mod.EeveeHelper.Entities {
         private Dictionary<Entity, bool> lastMatchVisible = new Dictionary<Entity, bool>();
         private Dictionary<Entity, Tuple<bool, bool, bool>> lastStates = new Dictionary<Entity, Tuple<bool, bool, bool>>();
         private bool legacyDestroySometimesAnyway;
+        private bool updatedOnce;
 
         public AttachedContainer(EntityData data, Vector2 offset) : base(data.Position + offset) {
             Collider = new Hitbox(data.Width, data.Height);
@@ -90,10 +91,12 @@ namespace Celeste.Mod.EeveeHelper.Entities {
                 TryAttach(true);
                 if (!attached)
                     customAttached = null;
-            } else {
+            } else if (attachMode != EntityContainer.ContainMode.DelayedRoomStart) {
                 if (attached)
                     TryAttach();
             }
+
+            updatedOnce = false;
 
             base.Awake(scene);
         }
@@ -102,6 +105,16 @@ namespace Celeste.Mod.EeveeHelper.Entities {
             base.Update();
 
             var newAttached = string.IsNullOrEmpty(attachFlag) || SceneAs<Level>().Session.GetFlag(attachFlag) != notAttachFlag;
+
+            if (!updatedOnce) {
+                if (newAttached && attachMode == EntityContainer.ContainMode.DelayedRoomStart) {
+                    attached = newAttached;
+
+                    TryAttach(true);
+                }
+
+                updatedOnce = true;
+            }
 
             if (attachMode != EntityContainer.ContainMode.Always) {
                 if (newAttached != attached) {
@@ -177,7 +190,7 @@ namespace Celeste.Mod.EeveeHelper.Entities {
 
         private bool TryAttach(bool first = false) {
             if (mover == null) {
-                if (attachMode != EntityContainer.ContainMode.RoomStart || first) {
+                if (first || (attachMode != EntityContainer.ContainMode.RoomStart && attachMode != EntityContainer.ContainMode.DelayedRoomStart)) {
                     var closestDist = 0f;
                     Entity closest = null;
                     foreach (var entity in Scene.Entities) {

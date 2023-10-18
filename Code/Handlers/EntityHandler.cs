@@ -46,17 +46,17 @@ namespace Celeste.Mod.EeveeHelper.Handlers {
             factoryList.Add(registry);
         }
         public static void Register<T>(EntityHandlerFactory factory, EntityHandlerIsValid isValid = null) where T : Entity
-            => Register(typeof(T), factory);
+            => Register(typeof(T), factory, isValid);
 
         public static void RegisterInherited(Type objectType, EntityHandlerFactory factory, EntityHandlerIsValid isValid = null) {
             foreach (var type in FakeAssembly.GetEntryAssembly().GetTypesSafe()) {
                 if (objectType.IsAssignableFrom(type)) {
-                    Register(type, factory);
+                    Register(type, factory, isValid);
                 }
             }
         }
         public static void RegisterInherited<T>(EntityHandlerFactory factory, EntityHandlerIsValid isValid = null) where T : Entity
-            => RegisterInherited(typeof(T), factory);
+            => RegisterInherited(typeof(T), factory, isValid);
 
         public static void Register(EntityHandlerFactory factory, EntityHandlerIsValid isValid = null) {
             var registry = new Registry { Constructor = factory, IsValid = isValid ?? DefaultInsideCheck };

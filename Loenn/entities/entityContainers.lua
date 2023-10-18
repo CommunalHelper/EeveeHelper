@@ -15,6 +15,7 @@ local holdableContainer = {
                 fitContained = true,
                 ignoreAnchors = false,
                 forceStandardBehavior = false,
+                ignoreContainerBounds = false,
                 gravity = true,
                 holdable = true,
                 noDuplicate = false,
@@ -63,6 +64,7 @@ local attachedContainer = {
             fitContained = true,
             ignoreAnchors = false,
             forceStandardBehavior = false,
+            ignoreContainerBounds = false,
             attachMode = "RoomStart",
             attachFlag = "",
             attachTo = "",
@@ -93,6 +95,7 @@ local floatyContainer = {
             containFlag = "",
             ignoreAnchors = false,
             forceStandardBehavior = false,
+            ignoreContainerBounds = false,
             floatSpeed = 1.0,
             floatMove = 4.0,
             pushSpeed = 1.0,
@@ -123,6 +126,7 @@ local SMWTrackContainer = {
                 fitContained = true,
                 ignoreAnchors = false,
                 forceStandardBehavior = false,
+                ignoreContainerBounds = false,
                 moveSpeed = 100.0,
                 fallSpeed = 200.0,
                 gravity = 200.0,
@@ -205,6 +209,7 @@ local flagGateContainer = {
                 fitContained = true,
                 ignoreAnchors = false,
                 forceStandardBehavior = false,
+                ignoreContainerBounds = false,
                 moveFlag = "",
                 shakeTime = 0.5,
                 moveTime = 2.0,
@@ -256,6 +261,7 @@ local flagToggleModifier = {
             containMode = "RoomStart",
             containFlag = "",
             forceStandardBehavior = false,
+            ignoreContainerBounds = false,
             flag = "",
             notFlag = false,
             toggleActive = true,
@@ -280,6 +286,7 @@ local collidableModifier = {
                 containMode = "RoomStart",
                 containFlag = "",
                 forceStandardBehavior = false,
+                ignoreContainerBounds = false,
                 collisionMode = "NoCollide",
                 keepBaseCollision = false
             }
@@ -318,6 +325,27 @@ local collidableModifier = {
     }
 }
 
+local depthModifier = {
+    name = "EeveeHelper/DepthModifier",
+    fillColor = { 0.6, 1.0, 0.6, 0.4 },
+    borderColor = { 0.6, 1.0, 0.6, 1 },
+
+    placements = {
+        name = "default",
+        data = {
+            width = 8,
+            height = 8,
+            whitelist = "",
+            blacklist = "",
+            containMode = "RoomStart",
+            containFlag = "",
+            forceStandardBehavior = false,
+            ignoreContainerBounds = false,
+            depth = -9000,
+        }
+    }
+}
+
 local globalModifier = {
     name = "EeveeHelper/GlobalModifier",
     fillColor = { 0.6, 1.0, 0.6, 0.4 },
@@ -336,6 +364,21 @@ local globalModifier = {
     }
 }
 
+local debugContainer = {
+    name = "EeveeHelper/DebugContainer",
+    fillColor = { 0.6, 0.6, 1.0, 0.4 },
+    borderColor = { 0.6, 0.6, 1.0, 1 },
+
+    placements = {
+        name = "default",
+        data = {
+            width = 8,
+            height = 8,
+            containMode = "RoomStart",
+        }
+    }
+}
+
 local containers = {
     holdableContainer,
     attachedContainer,
@@ -344,12 +387,45 @@ local containers = {
     flagGateContainer,
     flagToggleModifier,
     collidableModifier,
+    depthModifier,
     globalModifier,
+    debugContainer
 }
 
-local containModes = { "RoomStart", "FlagChanged", "Always" }
+local containModes = { "RoomStart", "FlagChanged", "Always", "DelayedRoomStart" }
 local directions = { "Left", "Right" }
 local easeTypes = { "Linear", "SineIn", "SineOut", "SineInOut", "QuadIn", "QuadOut", "QuadInOut", "CubeIn", "CubeOut", "CubeInOut", "QuintIn", "QuintOut", "QuintInOut", "BackIn", "BackOut", "BackInOut", "ExpoIn", "ExpoOut", "ExpoInOut", "BigBackIn", "BigBackOut", "BigBackInOut", "ElasticIn", "ElasticOut", "ElasticInOut", "BounceIn", "BounceOut", "BounceInOut" }
+
+-- stolen from crystalline helper (with permission of course)
+-- see: https://github.com/CommunalHelper/CrystallineHelper/blob/dev/Loenn/triggers/edit_depth_trigger.lua
+local depths = {
+    {"BG Terrain (10000)", 10000},
+    {"BG Mirrors (9500)", 9500},
+    {"BG Decals (9000)", 9000},
+    {"BG Particles (8000)", 8000},
+    {"Solids Below (5000)", 5000},
+    {"Below (2000)", 2000},
+    {"NPCs (1000)", 1000},
+    {"Theo Crystal (100)", 100},
+    {"Player (0)", 0},
+    {"Dust (-50)", -50},
+    {"Pickups (-100)", -100},
+    {"Seeker (-200)", -200},
+    {"Particles (-8000)", -8000},
+    {"Above (-8500)", -8500},
+    {"Solids (-9000)", -9000},
+    {"FG Terrain (-10000)", -10000},
+    {"FG Decals (-10500)", -10500},
+    {"Dream Blocks (-11000)", -11000},
+    {"Crystal Spinners (-11500)", -11500},
+    {"Player Dreamdashing (-12000)", -12000},
+    {"Enemy (-12500)", -12500},
+    {"Fake Walls (-13000)", -13000},
+    {"FG Particles (-50000)", -50000},
+    {"Top (-1000000)", -1000000},
+    {"Formation Sequences (-2000000)", -2000000},
+}
+
 
 local sharedFieldInformation = {
     containMode = {
@@ -367,6 +443,10 @@ local sharedFieldInformation = {
     direction = {
         options = directions,
         editable = false
+    },
+    depth = {
+        fieldType = "integer",
+        options = depths
     },
     inactiveColor = {
         fieldType = "color"

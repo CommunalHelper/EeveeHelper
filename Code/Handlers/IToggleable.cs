@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 
 namespace Celeste.Mod.EeveeHelper.Handlers {
     public interface IToggleable {
+        object GetDefaultState();
+
         object SaveState();
 
         void ReadState(object state, bool toggleActive, bool toggleVisible, bool toggleCollidable);

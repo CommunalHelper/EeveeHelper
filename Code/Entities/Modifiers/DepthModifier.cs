@@ -26,6 +26,13 @@ namespace Celeste.Mod.EeveeHelper.Entities.Modifiers {
             });
         }
 
+        public override void Update() {
+            base.Update();
+
+            foreach (var handler in Container.Contained)
+                ModifyDepth(handler);
+        }
+
         private void ModifyDepth(IEntityHandler handler) {
             var entity = handler.Entity;
 

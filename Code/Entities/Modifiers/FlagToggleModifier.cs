@@ -86,7 +86,7 @@ namespace Celeste.Mod.EeveeHelper.Entities.Modifiers {
             if (!entityStates.ContainsKey(handler)) {
                 var state = HandlerUtils.GetAs<IToggleable, object>(handler,
                     t => rememberInitialState ? t.SaveState() : t.GetDefaultState(),
-                    e => rememberInitialState ? new EntityState(e) : new EntityState());
+                    e => rememberInitialState ? new EntityState(e) : new EntityState(true));
 
                 if (state != null)
                     entityStates.Add(handler, state);
@@ -120,12 +120,12 @@ namespace Celeste.Mod.EeveeHelper.Entities.Modifiers {
 
             public bool TalkComponentEnabled;
 
-            public EntityState() {
-                Active = true;
-                Visible = true;
-                Collidable = true;
+            public EntityState(bool value) {
+                Active = value;
+                Visible = value;
+                Collidable = value;
 
-                TalkComponentEnabled = true;
+                TalkComponentEnabled = value;
             }
 
             public EntityState(Entity entity) {

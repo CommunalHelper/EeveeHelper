@@ -267,6 +267,8 @@ local flagToggleModifier = {
             toggleActive = true,
             toggleVisible = true,
             toggleCollidable = true,
+            rememberInitialState = true,
+            delayedToggle = false,
         }
     }
 }

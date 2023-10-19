@@ -158,6 +158,8 @@ entities.EeveeHelper/FlagToggleModifier.attributes.description.notFlag=Inverts t
 entities.EeveeHelper/FlagToggleModifier.attributes.description.toggleActive=Controls whether toggling will affect if entities update (move/act on their own).
 entities.EeveeHelper/FlagToggleModifier.attributes.description.toggleVisible=Controls whether toggling will affect if entities are visible.
 entities.EeveeHelper/FlagToggleModifier.attributes.description.toggleCollidable=Controls whether toggling will affect if entities are collidable.
+entities.EeveeHelper/FlagToggleModifier.attributes.description.rememberInitialState=Whether the state of the entities (active, visible, collidable) when they were first disabled should be remembered when the entities are re-enabled.
+entities.EeveeHelper/FlagToggleModifier.attributes.description.delayedToggle=(Legacy behaviour) If enabled, entities will not toggle off the moment they enter the container, and will instead wait for the next update tick.
 
 # Collidable Modifier
 entities.EeveeHelper/CollidableModifier.attributes.description.collisionMode=The type of collision the modified entities should be given.

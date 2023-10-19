@@ -23,6 +23,9 @@ namespace Celeste.Mod.EeveeHelper.Entities.Modifiers {
         private bool toggleVisible;
         private bool toggleCollidable;
 
+        private bool rememberInitialState;
+        private bool delayedToggle;
+
         public EntityContainer Container { get; set; }
         private Dictionary<IEntityHandler, object> entityStates = new Dictionary<IEntityHandler, object>();
 
@@ -41,8 +44,12 @@ namespace Celeste.Mod.EeveeHelper.Entities.Modifiers {
             toggleVisible = data.Bool("toggleVisible", true);
             toggleCollidable = data.Bool("toggleCollidable", true);
 
+            rememberInitialState = data.Bool("rememberInitialState", true);
+            delayedToggle = data.Bool("delayedToggle", true);
+
             Add(Container = new EntityContainer(data) {
                 DefaultIgnored = e => e.Get<EntityContainer>() != null,
+                OnAttach = OnAttach,
                 OnDetach = EnableEntity
             });
 
@@ -63,18 +70,31 @@ namespace Celeste.Mod.EeveeHelper.Entities.Modifiers {
                 DisableEntities();
         }
 
+        private void OnAttach(IEntityHandler handler) {
+            if (delayedToggle || Toggled)
+                return;
+
+            DisableEntity(handler);
+        }
+
         private void DisableEntities() {
-            foreach (var handler in Container.Contained) {
-                if (!entityStates.ContainsKey(handler)) {
-                    var state = HandlerUtils.GetAs<IToggleable, object>(handler, t => t.SaveState(), e => new EntityState(e));
-                    if (state != null) {
-                        entityStates.Add(handler, state);
-                    }
-                }
-                HandlerUtils.DoAs<IToggleable>(handler,
-                    t => t.Disable(toggleActive, toggleVisible, toggleCollidable),
-                    e => EntityState.Disable(e, toggleActive, toggleVisible, toggleCollidable));
+            foreach (var handler in Container.Contained)
+                DisableEntity(handler);
+        }
+
+        private void DisableEntity(IEntityHandler handler) {
+            if (!entityStates.ContainsKey(handler)) {
+                var state = HandlerUtils.GetAs<IToggleable, object>(handler,
+                    t => rememberInitialState ? t.SaveState() : t.GetDefaultState(),
+                    e => rememberInitialState ? new EntityState(e) : new EntityState());
+
+                if (state != null)
+                    entityStates.Add(handler, state);
             }
+
+            HandlerUtils.DoAs<IToggleable>(handler,
+                t => t.Disable(toggleActive, toggleVisible, toggleCollidable),
+                e => EntityState.Disable(e, toggleActive, toggleVisible, toggleCollidable));
         }
 
         private void EnableEntities() {
@@ -94,11 +114,19 @@ namespace Celeste.Mod.EeveeHelper.Entities.Modifiers {
         }
 
         public struct EntityState {
-            bool Active;
-            bool Visible;
-            bool Collidable;
+            public bool Active;
+            public bool Visible;
+            public bool Collidable;
 
-            bool TalkComponentEnabled;
+            public bool TalkComponentEnabled;
+
+            public EntityState() {
+                Active = true;
+                Visible = true;
+                Collidable = true;
+
+                TalkComponentEnabled = true;
+            }
 
             public EntityState(Entity entity) {
                 Active = entity.Active;

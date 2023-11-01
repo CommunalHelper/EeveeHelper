@@ -169,7 +169,7 @@ namespace Celeste.Mod.EeveeHelper.Components {
         }
 
         protected virtual bool WhitelistCheck(Entity entity) {
-            if (Blacklist.Any(pair => pair.Item1 == entity.GetType().Name))
+            if (Blacklist.Any(pair => pair.Item1 == entity.GetType().Name && pair.Item2 == -1))
                 return false;
             if (WhitelistAll)
                 return true;

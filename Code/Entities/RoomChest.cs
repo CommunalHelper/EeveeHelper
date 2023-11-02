@@ -3,11 +3,9 @@ using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
-using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Xml.Serialization;
 
 namespace Celeste.Mod.EeveeHelper.Entities;
@@ -494,10 +492,6 @@ public class RoomChest : Actor
 	}
 
 
-	private static MethodInfo m_Scene_SetActualDepth = typeof(Scene).GetMethod("SetActualDepth", BindingFlags.NonPublic | BindingFlags.Instance);
-	private static MethodInfo m_Tracker_ComponentAdded = typeof(Tracker).GetMethod("ComponentAdded", BindingFlags.NonPublic | BindingFlags.Instance);
-	private static MethodInfo m_Tracker_ComponentRemoved = typeof(Tracker).GetMethod("ComponentRemoved", BindingFlags.NonPublic | BindingFlags.Instance);
-
 	public static void Initialize()
 	{
 		HoldableEntityGetters.Add(typeof(RoomChest), (holdable) =>
@@ -624,13 +618,14 @@ public class RoomChest : Actor
 			cursor.Emit(OpCodes.Brfalse, thisLabel);
 			cursor.EmitDelegate<Action<Entity, Scene>>((entity, scene) =>
 			{
-				DynamicData.For(entity).Set("Scene", scene);
+				entity.Scene = scene;
+
 				foreach (var component in entity.Components)
 				{
-					m_Tracker_ComponentAdded.Invoke(scene.Tracker, new object[] { component });
+					scene.Tracker.ComponentAdded(component);
 				}
 
-				m_Scene_SetActualDepth.Invoke(scene, new object[] { entity });
+				scene.SetActualDepth(entity);
 			});
 			cursor.Emit(OpCodes.Br, postLabel);
 			cursor.MarkLabel(thisLabel);
@@ -650,10 +645,11 @@ public class RoomChest : Actor
 			cursor.Emit(OpCodes.Brfalse, thisLabel);
 			cursor.EmitDelegate<Action<Entity, Scene>>((entity, scene) =>
 			{
-				DynamicData.For(entity).Set("Scene", null);
+				entity.Scene = null;
+
 				foreach (var component in entity.Components)
 				{
-					m_Tracker_ComponentRemoved.Invoke(scene.Tracker, new object[] { component });
+					scene.Tracker.ComponentRemoved(component);
 				}
 			});
 			cursor.Emit(OpCodes.Br, postLabel);

@@ -499,7 +499,7 @@ public static class MiscHooks
 				var data = DynamicData.For(entity);
 				if (data.Get<bool?>("zipMoverNodeHandled") == true)
 				{
-					return data.Get<Vector2>("start");
+					return entity.start;
 				}
 				return start;
 			});
@@ -555,15 +555,14 @@ public static class MiscHooks
 			return @in;
 		}
 
-		var lerp = dyn.Get<float>("lerp");
-		var target = dyn.Get<int>("target");
-		Audio.Position(dyn.Get<FMOD.Studio.EventInstance>("moveSfx"), swap.Center);
-		Audio.Position(dyn.Get<FMOD.Studio.EventInstance>("returnSfx"), swap.Center);
-		if (lerp == target)
+		Audio.Position(swap.moveSfx, swap.Center);
+		Audio.Position(swap.returnSfx, swap.Center);
+
+		if (swap.lerp == swap.target)
 		{
-			if (target == 0)
+			if (swap.target == 0)
 			{
-				Audio.SetParameter(dyn.Get<FMOD.Studio.EventInstance>("returnSfx"), "end", 1f);
+				Audio.SetParameter(swap.returnSfx, "end", 1f);
 				Audio.Play("event:/game/05_mirror_temple/swapblock_return_end", swap.Center);
 			}
 			else
@@ -571,6 +570,7 @@ public static class MiscHooks
 				Audio.Play("event:/game/05_mirror_temple/swapblock_move_end", swap.Center);
 			}
 		}
+
 		return false;
 	}
 

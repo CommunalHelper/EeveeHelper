@@ -30,7 +30,7 @@ internal class AxisMoverHandler : EntityHandler, IMoveable
 
 		foreach (var pair in axesHandler)
 		{
-			entityData.Set(pair.Item1, entityData.Get<float>("startY") + (pair.Item2 ? move.Y : move.X));
+			entityData.Set(pair.Item1, entityData.Get<float>(pair.Item1) + (pair.Item2 ? move.Y : move.X));
 		}
 
 		return true;

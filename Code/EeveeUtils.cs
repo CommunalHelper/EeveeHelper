@@ -2,15 +2,11 @@
 using Monocle;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 
 namespace Celeste.Mod.EeveeHelper;
 
 public static class EeveeUtils
 {
-	internal static MethodInfo m_SpringBounceAnimate = typeof(Spring).GetMethod("BounceAnimate", BindingFlags.NonPublic | BindingFlags.Instance);
-	internal static MethodInfo m_BounceBlockCheckModeChange = typeof(BounceBlock).GetMethod("CheckModeChange", BindingFlags.NonPublic | BindingFlags.Instance);
-
 	public static Vector2 GetPosition(Entity entity)
 	{
 		return entity is Platform platform ? platform.ExactPosition : entity.Position;

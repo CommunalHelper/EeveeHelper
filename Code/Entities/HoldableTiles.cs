@@ -51,7 +51,7 @@ public class HoldableTiles : Actor
 				OnCarry = OnCarry
 			});
 		}
-		SquishCallback = OnSquish;
+		SquishCallback = OnSquishNew;
 	}
 
 	public override void Added(Scene scene)
@@ -106,7 +106,7 @@ public class HoldableTiles : Actor
 		Solid.MoveTo(Position);
 	}
 
-	protected override void OnSquish(CollisionData data)
+	private void OnSquishNew(CollisionData data)
 	{
 		if (Collidable)
 		{
@@ -237,7 +237,7 @@ public class HoldableTiles : Actor
 			if (spring != null)
 			{
 				HitSpring(spring);
-				EeveeUtils.m_SpringBounceAnimate.Invoke(spring, new object[] { });
+				spring.BounceAnimate();
 			}
 			else if (OnGround(1))
 			{

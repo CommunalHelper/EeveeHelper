@@ -5,14 +5,11 @@ using Monocle;
 using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 
 namespace Celeste.Mod.EeveeHelper.Components;
 
 public class EntityContainerMover : EntityContainer
 {
-	internal static FieldInfo platform_staticMovers = typeof(Platform).GetField("staticMovers", BindingFlags.Instance | BindingFlags.NonPublic);
-
 	public static bool LiftSpeedFix;
 	public static bool DecalStaticMoverFix;
 

@@ -93,9 +93,9 @@ public class CoreZone : Entity
 			}
 			if (listener.Entity is BounceBlock bounceBlock)
 			{
-				if ((int)DynamicData.For(bounceBlock).Get("state") == 0)
-				{ // BounceBlock.States.Waiting
-					EeveeUtils.m_BounceBlockCheckModeChange.Invoke(bounceBlock, new object[] { });
+				if (bounceBlock.state == BounceBlock.States.Waiting)
+				{
+					bounceBlock.CheckModeChange();
 				}
 			}
 		}

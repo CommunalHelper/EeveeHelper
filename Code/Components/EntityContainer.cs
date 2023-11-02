@@ -4,7 +4,6 @@ using Monocle;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
 namespace Celeste.Mod.EeveeHelper.Components;
 
@@ -341,8 +340,6 @@ public class EntityContainer : Component
 		Contained.RemoveAll(e => e.Entity?.Scene == null);
 	}
 
-	internal static FieldInfo f_Decal_textures = typeof(Decal).GetField("textures", BindingFlags.NonPublic | BindingFlags.Instance);
-
 	public bool CheckCollision(Entity entity)
 	{
 		if (IgnoreContainerBounds)
@@ -371,13 +368,12 @@ public class EntityContainer : Component
 
 	internal bool CheckDecal(Decal decal)
 	{
-		var ms = (List<MTexture>)f_Decal_textures.GetValue(decal);
-		if (ms.Count == 0)
+		if (decal.textures.Count == 0)
 		{
 			return false;
 		}
 
-		var m = ms[0];
+		var m = decal.textures[0];
 		var r = new Rectangle((int)(decal.Position.X - (m.ClipRect.Width / 2)), (int)(decal.Position.Y - (m.ClipRect.Height / 2)), m.ClipRect.Width, m.ClipRect.Height);
 		return Collide.CheckRect(Entity, r);
 	}

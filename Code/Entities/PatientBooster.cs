@@ -1,7 +1,6 @@
 ﻿using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
-using MonoMod.Utils;
 using System.Collections;
 
 namespace Celeste.Mod.EeveeHelper.Entities;
@@ -9,21 +8,17 @@ namespace Celeste.Mod.EeveeHelper.Entities;
 [CustomEntity("EeveeHelper/PatientBooster")]
 public class PatientBooster : Booster
 {
-	private DynamicData baseData;
 	private Vector2? lastSpritePos;
 
-	public Sprite Sprite => baseData.Get<Sprite>("sprite");
+	public Sprite Sprite => sprite;
 
 	public PatientBooster(EntityData data, Vector2 offset)
 		: base(data.Position + offset, data.Bool("red"))
 	{
 		var red = data.Bool("red");
 
-		baseData = new DynamicData(typeof(Booster), this);
-		Remove(Sprite);
-		var sprite = GFX.SpriteBank.Create($"EeveeHelper_patientBooster{(red ? "Red" : "")}");
-		baseData.Set("sprite", sprite);
-		Add(sprite);
+		Remove(sprite);
+		Add(sprite = GFX.SpriteBank.Create($"EeveeHelper_patientBooster{(red ? "Red" : "")}"));
 	}
 
 	public override void Update()
@@ -32,8 +27,8 @@ public class PatientBooster : Booster
 		var player = Scene.Tracker.GetEntity<Player>();
 		if (player != null && player.CurrentBooster == this)
 		{
-			baseData.Set("BoostingPlayer", true);
-			new DynData<Player>(player).Set("boostTarget", Center);
+			BoostingPlayer = true;
+			player.boostTarget = Center;
 			var targetPos = Center - player.Collider.Center + (Input.Aim.Value * 3f);
 			player.MoveToX(targetPos.X);
 			player.MoveToY(targetPos.Y);

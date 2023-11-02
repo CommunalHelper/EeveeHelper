@@ -9,56 +9,48 @@ namespace Celeste.Mod.EeveeHelper.Handlers.Impl;
 
 public class ZipMoverNodeHandler : EntityHandler, IMoveable, IAnchorProvider
 {
+	private ZipMover zipMover;
 	private bool first;
-	private DynamicData entityData;
-	private DynamicData pathRendererData;
 
 	public ZipMoverNodeHandler(Entity entity, bool first) : base(entity)
 	{
+		zipMover = entity as ZipMover;
 		this.first = first;
-
-		entityData = DynamicData.For(entity as ZipMover);
 
 		if (first)
 		{
-			entityData.Set("zipMoverNodeHandled", true);
+			DynamicData.For(zipMover).Set("zipMoverNodeHandled", true);
 		}
 	}
 
 	public override bool IsInside(EntityContainer container)
 	{
-		return InsideCheck(container, first, entityData);
+		return InsideCheck(container, first, zipMover);
 	}
 
 	public override Rectangle GetBounds()
 	{
-		var pos = entityData.Get<Vector2>(first ? "start" : "target");
+		var pos = first ? zipMover.start : zipMover.target;
 		return new Rectangle((int)pos.X, (int)pos.Y, 0, 0);
 	}
 
 	public bool Move(Vector2 move, Vector2? liftSpeed)
 	{
-		var anchor = first ? "start" : "target";
-		entityData.Set(anchor, entityData.Get<Vector2>(anchor) + move);
-		var percent = entityData.Get<float>("percent");
-		var start = entityData.Get<Vector2>("start");
-		var target = entityData.Get<Vector2>("target");
-		var newPos = Vector2.Lerp(start, target, percent);
+		if (first)
+		{
+			zipMover.start += move;
+		}
+		else
+		{
+			zipMover.target += move;
+		}
 
-		var zipMover = Entity as ZipMover;
+		var newPos = Vector2.Lerp(zipMover.start, zipMover.target, zipMover.percent);
 		zipMover.MoveTo(newPos, zipMover.LiftSpeed);
 
-		if (pathRendererData == null)
+		if (zipMover.pathRenderer != null)
 		{
-			var pathRenderer = entityData.Get<object>("pathRenderer");
-			if (pathRenderer != null)
-			{
-				pathRendererData = new DynamicData(pathRenderer);
-			}
-		}
-		if (pathRendererData != null)
-		{
-			UpdatePathRenderer(start, target);
+			UpdatePathRenderer(zipMover.start, zipMover.target);
 		}
 
 		return true;
@@ -66,16 +58,19 @@ public class ZipMoverNodeHandler : EntityHandler, IMoveable, IAnchorProvider
 
 	private void UpdatePathRenderer(Vector2 newFrom, Vector2 newTo)
 	{
+		var pathRenderer = zipMover.pathRenderer;
+
 		var from = newFrom + new Vector2(Entity.Width / 2f, Entity.Height / 2f);
 		var to = newTo + new Vector2(Entity.Width / 2f, Entity.Height / 2f);
 		var angle = (from - to).Angle();
-		pathRendererData.Set("from", from);
-		pathRendererData.Set("to", to);
-		pathRendererData.Set("sparkAdd", (from - to).SafeNormalize(5f).Perpendicular());
-		pathRendererData.Set("sparkDirFromA", angle + ((float)Math.PI / 8f));
-		pathRendererData.Set("sparkDirFromB", angle - ((float)Math.PI / 8f));
-		pathRendererData.Set("sparkDirToA", angle + (float)Math.PI - ((float)Math.PI / 8f));
-		pathRendererData.Set("sparkDirToB", angle + (float)Math.PI + ((float)Math.PI / 8f));
+
+		pathRenderer.from = from;
+		pathRenderer.to = to;
+		pathRenderer.sparkAdd = (from - to).SafeNormalize(5f).Perpendicular();
+		pathRenderer.sparkDirFromA = angle + ((float)Math.PI / 8f);
+		pathRenderer.sparkDirFromB = angle - ((float)Math.PI / 8f);
+		pathRenderer.sparkDirToA = angle + (float)Math.PI - ((float)Math.PI / 8f);
+		pathRenderer.sparkDirToB = angle + (float)Math.PI + ((float)Math.PI / 8f);
 	}
 
 	public void PreMove() { }
@@ -84,9 +79,9 @@ public class ZipMoverNodeHandler : EntityHandler, IMoveable, IAnchorProvider
 	public List<string> GetAnchors() => new();
 
 
-	public static bool InsideCheck(EntityContainer container, bool first, DynamicData data)
+	public static bool InsideCheck(EntityContainer container, bool first, ZipMover entity)
 	{
-		var pos = data.Get<Vector2>(first ? "start" : "target");
+		var pos = first ? entity.start : entity.target;
 		return pos.X >= container.Entity.Left && pos.Y >= container.Entity.Top &&
 			pos.X <= container.Entity.Right && pos.Y <= container.Entity.Bottom;
 	}

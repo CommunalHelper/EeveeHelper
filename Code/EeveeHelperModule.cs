@@ -4,7 +4,6 @@ using Celeste.Mod.EeveeHelper.Entities;
 using Celeste.Mod.EeveeHelper.Handlers;
 using Celeste.Mod.EeveeHelper.Handlers.Impl;
 using Monocle;
-using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
 
@@ -43,13 +42,13 @@ public class EeveeHelperModule : EverestModule
 		EntityHandler.RegisterInherited<DashSwitch>((entity, container) => new AxisMoverHandler(entity, new Tuple<string, bool>("startY", true)));
 
 		EntityHandler.RegisterInherited<ZipMover>((entity, container) => new ZipMoverNodeHandler(entity, true),
-			(entity, container) => ZipMoverNodeHandler.InsideCheck(container, true, DynamicData.For(entity as ZipMover)));
+			(entity, container) => ZipMoverNodeHandler.InsideCheck(container, true, entity as ZipMover));
 		EntityHandler.RegisterInherited<ZipMover>((entity, container) => new ZipMoverNodeHandler(entity, false),
-			(entity, container) => ZipMoverNodeHandler.InsideCheck(container, false, DynamicData.For(entity as ZipMover)));
+			(entity, container) => ZipMoverNodeHandler.InsideCheck(container, false, entity as ZipMover));
 		EntityHandler.RegisterInherited<SwapBlock>((entity, container) => new SwapBlockHandler(entity, true),
-			(entity, container) => SwapBlockHandler.InsideCheck(container, true, DynamicData.For(entity as SwapBlock)));
+			(entity, container) => SwapBlockHandler.InsideCheck(container, true, entity as SwapBlock));
 		EntityHandler.RegisterInherited<SwapBlock>((entity, container) => new SwapBlockHandler(entity, false),
-			(entity, container) => SwapBlockHandler.InsideCheck(container, false, DynamicData.For(entity as SwapBlock)));
+			(entity, container) => SwapBlockHandler.InsideCheck(container, false, entity as SwapBlock));
 		EntityHandler.RegisterInherited<Decal>((entity, container) => new DecalHandler(entity),
 			(entity, container) => container.CheckDecal(entity as Decal));
 	}

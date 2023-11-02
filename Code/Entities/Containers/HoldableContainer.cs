@@ -115,7 +115,7 @@ public class HoldableContainer : Actor, IContainer
 			});
 		}
 
-		SquishCallback = OnSquish;
+		SquishCallback = OnSquishNew;
 	}
 
 	public override void Awake(Scene scene)
@@ -206,7 +206,7 @@ public class HoldableContainer : Actor, IContainer
 		_Container.DoMoveAction(() => Position = target);
 	}
 
-	protected override void OnSquish(CollisionData data)
+	private void OnSquishNew(CollisionData data)
 	{
 		var wiggled = false;
 		_Container.DoMoveAction(() => wiggled = TryBigSquishWiggle(data));
@@ -393,7 +393,7 @@ public class HoldableContainer : Actor, IContainer
 			if (spring != null)
 			{
 				HitSpring(spring);
-				EeveeUtils.m_SpringBounceAnimate.Invoke(spring, new object[] { });
+				spring.BounceAnimate();
 			}
 			else if (OnGround(1))
 			{

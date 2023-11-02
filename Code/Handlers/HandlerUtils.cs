@@ -1,34 +1,37 @@
 ﻿using Celeste.Mod.EeveeHelper.Handlers;
 using Monocle;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Celeste.Mod.EeveeHelper {
-    public static class HandlerUtils {
-        public static bool DoAs<T>(IEntityHandler handler, Action<T> action, Action<Entity> or = null) {
-            if (handler is T castedHandler) {
-                action(castedHandler);
-                return true;
-            } else if (or != null && handler.Entity != null && handler.Container != null &&
-                handler.Container.IsFirstHandler(handler) && !handler.Container.HasHandlerFor<T>(handler.Entity)) {
+namespace Celeste.Mod.EeveeHelper;
 
-                or(handler.Entity);
-            }
-            return false;
-        }
+public static class HandlerUtils
+{
+	public static bool DoAs<T>(IEntityHandler handler, Action<T> action, Action<Entity> or = null)
+	{
+		if (handler is T castedHandler)
+		{
+			action(castedHandler);
+			return true;
+		}
+		else if (or != null && handler.Entity != null && handler.Container != null &&
+			handler.Container.IsFirstHandler(handler) && !handler.Container.HasHandlerFor<T>(handler.Entity))
+		{
+			or(handler.Entity);
+		}
+		return false;
+	}
 
-        public static R GetAs<T, R>(IEntityHandler handler, Func<T, R> func, Func<Entity, R> or = null) {
-            if (handler is T castedHandler) {
-                return func(castedHandler);
-            } else if (or != null && handler.Entity != null && handler.Container != null &&
-                handler.Container.IsFirstHandler(handler) && !handler.Container.HasHandlerFor<T>(handler.Entity)) {
-
-                return or(handler.Entity);
-            }
-            return default(R);
-        }
-    }
+	public static R GetAs<T, R>(IEntityHandler handler, Func<T, R> func, Func<Entity, R> or = null)
+	{
+		if (handler is T castedHandler)
+		{
+			return func(castedHandler);
+		}
+		else if (or != null && handler.Entity != null && handler.Container != null &&
+			handler.Container.IsFirstHandler(handler) && !handler.Container.HasHandlerFor<T>(handler.Entity))
+		{
+			return or(handler.Entity);
+		}
+		return default;
+	}
 }

@@ -1,170 +1,220 @@
-﻿using Celeste.Mod.EeveeHelper.Compat;
-using Celeste.Mod.EeveeHelper.Components;
+﻿using Celeste.Mod.EeveeHelper.Components;
 using Celeste.Mod.EeveeHelper.Handlers;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
-using MonoMod.Utils;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Celeste.Mod.EeveeHelper.Entities.Modifiers {
-    [CustomEntity("EeveeHelper/FlagToggleModifier")]
-    public class FlagToggleModifier : Entity, IContainer {
-        public bool Toggled => string.IsNullOrEmpty(flag) ? !notFlag : SceneAs<Level>().Session.GetFlag(flag) != notFlag;
+namespace Celeste.Mod.EeveeHelper.Entities.Modifiers;
 
-        private string flag;
-        private bool notFlag;
+[CustomEntity("EeveeHelper/FlagToggleModifier")]
+public class FlagToggleModifier : Entity, IContainer
+{
+	public bool Toggled => string.IsNullOrEmpty(flag) ? !notFlag : SceneAs<Level>().Session.GetFlag(flag) != notFlag;
 
-        private bool toggleActive;
-        private bool toggleVisible;
-        private bool toggleCollidable;
+	private string flag;
+	private bool notFlag;
 
-        private bool rememberInitialState;
-        private bool delayedToggle;
+	private bool toggleActive;
+	private bool toggleVisible;
+	private bool toggleCollidable;
 
-        public EntityContainer Container { get; set; }
-        private Dictionary<IEntityHandler, object> entityStates = new Dictionary<IEntityHandler, object>();
+	private bool rememberInitialState;
+	private bool delayedToggle;
 
-        public FlagToggleModifier(EntityData data, Vector2 offset) : base(data.Position + offset) {
-            Collider = new Hitbox(data.Width, data.Height);
-            Depth = Depths.Top - 9;
+	public EntityContainer Container { get; set; }
+	private Dictionary<IEntityHandler, object> entityStates = new();
 
-            var parsedFlag = EeveeUtils.ParseFlagAttr(data.Attr("flag"));
-            flag = parsedFlag.Item1;
-            notFlag = parsedFlag.Item2;
+	public FlagToggleModifier(EntityData data, Vector2 offset) : base(data.Position + offset)
+	{
+		Collider = new Hitbox(data.Width, data.Height);
+		Depth = Depths.Top - 9;
 
-            if (data.Bool("notFlag"))
-                notFlag = !notFlag;
+		var parsedFlag = EeveeUtils.ParseFlagAttr(data.Attr("flag"));
+		flag = parsedFlag.Item1;
+		notFlag = parsedFlag.Item2;
 
-            toggleActive = data.Bool("toggleActive", true);
-            toggleVisible = data.Bool("toggleVisible", true);
-            toggleCollidable = data.Bool("toggleCollidable", true);
+		if (data.Bool("notFlag"))
+		{
+			notFlag = !notFlag;
+		}
 
-            rememberInitialState = data.Bool("rememberInitialState", true);
-            delayedToggle = data.Bool("delayedToggle", true);
+		toggleActive = data.Bool("toggleActive", true);
+		toggleVisible = data.Bool("toggleVisible", true);
+		toggleCollidable = data.Bool("toggleCollidable", true);
 
-            Add(Container = new EntityContainer(data) {
-                DefaultIgnored = e => e.Get<EntityContainer>() != null,
-                OnAttach = OnAttach,
-                OnDetach = EnableEntity
-            });
+		rememberInitialState = data.Bool("rememberInitialState", true);
+		delayedToggle = data.Bool("delayedToggle", true);
 
-            Add(new TransitionListener {
-                OnIn = (f) => CheckToggled()
-            });
-        }
+		Add(Container = new EntityContainer(data)
+		{
+			DefaultIgnored = e => e.Get<EntityContainer>() != null,
+			OnAttach = OnAttach,
+			OnDetach = EnableEntity
+		});
 
-        public override void Update() {
-            base.Update();
-            CheckToggled();
-        }
+		Add(new TransitionListener
+		{
+			OnIn = (f) => CheckToggled()
+		});
+	}
 
-        private void CheckToggled() {
-            if (Toggled)
-                EnableEntities();
-            else
-                DisableEntities();
-        }
+	public override void Update()
+	{
+		base.Update();
+		CheckToggled();
+	}
 
-        private void OnAttach(IEntityHandler handler) {
-            if (delayedToggle || Toggled)
-                return;
+	private void CheckToggled()
+	{
+		if (Toggled)
+		{
+			EnableEntities();
+		}
+		else
+		{
+			DisableEntities();
+		}
+	}
 
-            DisableEntity(handler);
-        }
+	private void OnAttach(IEntityHandler handler)
+	{
+		if (delayedToggle || Toggled)
+		{
+			return;
+		}
 
-        private void DisableEntities() {
-            foreach (var handler in Container.Contained)
-                DisableEntity(handler);
-        }
+		DisableEntity(handler);
+	}
 
-        private void DisableEntity(IEntityHandler handler) {
-            if (!entityStates.ContainsKey(handler)) {
-                var state = HandlerUtils.GetAs<IToggleable, object>(handler,
-                    t => rememberInitialState ? t.SaveState() : t.GetDefaultState(),
-                    e => rememberInitialState ? new EntityState(e) : new EntityState(true));
+	private void DisableEntities()
+	{
+		foreach (var handler in Container.Contained)
+		{
+			DisableEntity(handler);
+		}
+	}
 
-                if (state != null)
-                    entityStates.Add(handler, state);
-            }
+	private void DisableEntity(IEntityHandler handler)
+	{
+		if (!entityStates.ContainsKey(handler))
+		{
+			var state = HandlerUtils.GetAs<IToggleable, object>(handler,
+				t => rememberInitialState ? t.SaveState() : t.GetDefaultState(),
+				e => rememberInitialState ? new EntityState(e) : new EntityState(true));
 
-            HandlerUtils.DoAs<IToggleable>(handler,
-                t => t.Disable(toggleActive, toggleVisible, toggleCollidable),
-                e => EntityState.Disable(e, toggleActive, toggleVisible, toggleCollidable));
-        }
+			if (state != null)
+			{
+				entityStates.Add(handler, state);
+			}
+		}
 
-        private void EnableEntities() {
-            foreach (var handler in Container.Contained)
-                EnableEntity(handler);
+		HandlerUtils.DoAs<IToggleable>(handler,
+			t => t.Disable(toggleActive, toggleVisible, toggleCollidable),
+			e => EntityState.Disable(e, toggleActive, toggleVisible, toggleCollidable));
+	}
 
-            entityStates.Clear();
-        }
+	private void EnableEntities()
+	{
+		foreach (var handler in Container.Contained)
+		{
+			EnableEntity(handler);
+		}
 
-        private void EnableEntity(IEntityHandler handler) {
-            if (entityStates.ContainsKey(handler)) {
-                var state = entityStates[handler];
-                HandlerUtils.DoAs<IToggleable>(handler,
-                    t => t.ReadState(state, toggleActive, toggleVisible, toggleCollidable),
-                    e => ((EntityState)state).Apply(e, toggleActive, toggleVisible, toggleCollidable));
-            }
-        }
+		entityStates.Clear();
+	}
 
-        public struct EntityState {
-            public bool Active;
-            public bool Visible;
-            public bool Collidable;
+	private void EnableEntity(IEntityHandler handler)
+	{
+		if (entityStates.ContainsKey(handler))
+		{
+			var state = entityStates[handler];
+			HandlerUtils.DoAs<IToggleable>(handler,
+				t => t.ReadState(state, toggleActive, toggleVisible, toggleCollidable),
+				e => ((EntityState)state).Apply(e, toggleActive, toggleVisible, toggleCollidable));
+		}
+	}
 
-            public bool TalkComponentEnabled;
+	public struct EntityState
+	{
+		public bool Active;
+		public bool Visible;
+		public bool Collidable;
 
-            public EntityState(bool value) {
-                Active = value;
-                Visible = value;
-                Collidable = value;
+		public bool TalkComponentEnabled;
 
-                TalkComponentEnabled = value;
-            }
+		public EntityState(bool value)
+		{
+			Active = value;
+			Visible = value;
+			Collidable = value;
 
-            public EntityState(Entity entity) {
-                Active = entity.Active;
-                Visible = entity.Visible;
-                Collidable = entity.Collidable;
+			TalkComponentEnabled = value;
+		}
 
-                var talkComponent = entity.Get<TalkComponent>();
-                if (talkComponent != null)
-                    TalkComponentEnabled = talkComponent.Enabled;
-                else
-                    TalkComponentEnabled = false;
-            }
+		public EntityState(Entity entity)
+		{
+			Active = entity.Active;
+			Visible = entity.Visible;
+			Collidable = entity.Collidable;
 
-            public void Apply(Entity entity, bool toggleActive, bool toggleVisible, bool toggleCollidable) {
-                if (toggleActive)  entity.Active = Active;
-                if (toggleVisible) entity.Visible = Visible;
+			var talkComponent = entity.Get<TalkComponent>();
+			if (talkComponent != null)
+			{
+				TalkComponentEnabled = talkComponent.Enabled;
+			}
+			else
+			{
+				TalkComponentEnabled = false;
+			}
+		}
 
-                if (toggleCollidable) {
-                    entity.Collidable = Collidable;
+		public void Apply(Entity entity, bool toggleActive, bool toggleVisible, bool toggleCollidable)
+		{
+			if (toggleActive)
+			{
+				entity.Active = Active;
+			}
 
-                    var talkComponent = entity.Get<TalkComponent>();
-                    if (talkComponent != null)
-                        talkComponent.Enabled = TalkComponentEnabled;
-                }
-            }
+			if (toggleVisible)
+			{
+				entity.Visible = Visible;
+			}
 
-            public static void Disable(Entity entity, bool toggleActive, bool toggleVisible, bool toggleCollidable) {
-                if (toggleActive)  entity.Active = false;
-                if (toggleVisible) entity.Visible = false;
+			if (toggleCollidable)
+			{
+				entity.Collidable = Collidable;
 
-                if (toggleCollidable) {
-                    entity.Collidable = false;
+				var talkComponent = entity.Get<TalkComponent>();
+				if (talkComponent != null)
+				{
+					talkComponent.Enabled = TalkComponentEnabled;
+				}
+			}
+		}
 
-                    var talkComponent = entity.Get<TalkComponent>();
-                    if (talkComponent != null)
-                        talkComponent.Enabled = false;
-                }
-            }
-        }
-    }
+		public static void Disable(Entity entity, bool toggleActive, bool toggleVisible, bool toggleCollidable)
+		{
+			if (toggleActive)
+			{
+				entity.Active = false;
+			}
+
+			if (toggleVisible)
+			{
+				entity.Visible = false;
+			}
+
+			if (toggleCollidable)
+			{
+				entity.Collidable = false;
+
+				var talkComponent = entity.Get<TalkComponent>();
+				if (talkComponent != null)
+				{
+					talkComponent.Enabled = false;
+				}
+			}
+		}
+	}
 }

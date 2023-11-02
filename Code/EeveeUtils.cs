@@ -2,59 +2,69 @@
 using Monocle;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Celeste.Mod.EeveeHelper {
-    public static class EeveeUtils {
-        internal static MethodInfo m_SpringBounceAnimate = typeof(Spring).GetMethod("BounceAnimate", BindingFlags.NonPublic | BindingFlags.Instance);
-        internal static MethodInfo m_BounceBlockCheckModeChange = typeof(BounceBlock).GetMethod("CheckModeChange", BindingFlags.NonPublic | BindingFlags.Instance);
+namespace Celeste.Mod.EeveeHelper;
 
-        public static Vector2 GetPosition(Entity entity) =>
-            entity is Platform platform ? platform.ExactPosition : entity.Position;
+public static class EeveeUtils
+{
+	internal static MethodInfo m_SpringBounceAnimate = typeof(Spring).GetMethod("BounceAnimate", BindingFlags.NonPublic | BindingFlags.Instance);
+	internal static MethodInfo m_BounceBlockCheckModeChange = typeof(BounceBlock).GetMethod("CheckModeChange", BindingFlags.NonPublic | BindingFlags.Instance);
 
-        public static Vector2 GetTrackBoost(Vector2 move, bool disableBoost) {
-            return move * new Vector2(disableBoost ? 0f : 1f, 1f) + (move.X != 0f && move.Y == 0f && disableBoost ? Vector2.UnitY * 0.01f : Vector2.Zero);
-        }
+	public static Vector2 GetPosition(Entity entity)
+	{
+		return entity is Platform platform ? platform.ExactPosition : entity.Position;
+	}
 
-        public static Tuple<string, bool> ParseFlagAttr(string flag)
-            => flag.StartsWith("!") ? Tuple.Create(flag.Substring(1), true) : Tuple.Create(flag, false);
+	public static Vector2 GetTrackBoost(Vector2 move, bool disableBoost)
+	{
+		return move * new Vector2(disableBoost ? 0f : 1f, 1f) + (move.X != 0f && move.Y == 0f && disableBoost ? Vector2.UnitY * 0.01f : Vector2.Zero);
+	}
 
-        public static void ParseFlagAttr(string attr, out string flag, out bool notFlag) {
-            var parsed = ParseFlagAttr(attr);
-            flag = parsed.Item1;
-            notFlag = parsed.Item2;
-        }
+	public static Tuple<string, bool> ParseFlagAttr(string flag)
+	{
+		return flag.StartsWith("!") ? Tuple.Create(flag.Substring(1), true) : Tuple.Create(flag, false);
+	}
 
-        public static EntityData CloneEntityData(EntityData data, LevelData levelData = null) {
-            var newData = new EntityData();
-            newData.Name = data.Name;
-            newData.Level = levelData ?? data.Level;
-            newData.ID = data.ID;
-            newData.Position = data.Position + data.Level.Position - newData.Level.Position;
-            newData.Width = data.Width;
-            newData.Height = data.Height;
-            newData.Origin = data.Origin;
-            newData.Nodes = (Vector2[])data.Nodes.Clone();
-            if (data.Values == null)
-                newData.Values = new Dictionary<string, object>();
-            else
-                newData.Values = new Dictionary<string, object>(data.Values);
-            return newData;
-        }
+	public static void ParseFlagAttr(string attr, out string flag, out bool notFlag)
+	{
+		var parsed = ParseFlagAttr(attr);
+		flag = parsed.Item1;
+		notFlag = parsed.Item2;
+	}
 
-        public static T GetValueOfType<T>(Dictionary<Type, T> dict, Type type) {
-            var success = dict.TryGetValue(type, out T value);
+	public static EntityData CloneEntityData(EntityData data, LevelData levelData = null)
+	{
+		var level = levelData ?? data.Level;
 
-            if (success)
-                return value;
+		return new EntityData
+		{
+			Name = data.Name,
+			Level = levelData ?? data.Level,
+			ID = data.ID,
+			Position = data.Position + data.Level.Position - level.Position,
+			Width = data.Width,
+			Height = data.Height,
+			Origin = data.Origin,
+			Nodes = (Vector2[])data.Nodes.Clone(),
+			Values = data.Values == null ? new Dictionary<string, object>() : new Dictionary<string, object>(data.Values)
+		};
+	}
 
-            if (type.BaseType == null)
-                return default(T);
+	public static T GetValueOfType<T>(Dictionary<Type, T> dict, Type type)
+	{
+		var success = dict.TryGetValue(type, out var value);
 
-            return GetValueOfType(dict, type.BaseType);
-        }
-    }
+		if (success)
+		{
+			return value;
+		}
+
+		if (type.BaseType == null)
+		{
+			return default;
+		}
+
+		return GetValueOfType(dict, type.BaseType);
+	}
 }

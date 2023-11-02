@@ -1,51 +1,59 @@
 ﻿using Monocle;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Celeste.Mod.EeveeHelper.Components {
-    public class DepthPartner : Component {
-        public PartnerEntity Partner;
+namespace Celeste.Mod.EeveeHelper.Components;
 
-        public int Depth;
-        public Action OnUpdate;
-        public Action OnRender;
+public class DepthPartner : Component
+{
+	public PartnerEntity Partner;
 
-        public DepthPartner(int depth) : base(true, true) {
-            Depth = depth;
-        }
+	public int Depth;
+	public Action OnUpdate;
+	public Action OnRender;
 
-        public override void EntityAdded(Scene scene) {
-            base.EntityAdded(scene);
-            scene.Add(Partner = new PartnerEntity(this));
-        }
+	public DepthPartner(int depth) : base(true, true)
+	{
+		Depth = depth;
+	}
 
-        public override void EntityRemoved(Scene scene) {
-            base.EntityRemoved(scene);
-            Partner.RemoveSelf();
-        }
+	public override void EntityAdded(Scene scene)
+	{
+		base.EntityAdded(scene);
+		scene.Add(Partner = new PartnerEntity(this));
+	}
 
-        public class PartnerEntity : Entity {
-            private DepthPartner component;
+	public override void EntityRemoved(Scene scene)
+	{
+		base.EntityRemoved(scene);
+		Partner.RemoveSelf();
+	}
 
-            public PartnerEntity(DepthPartner component) : base() {
-                this.component = component;
-                Depth = component.Depth;
-            }
+	public class PartnerEntity : Entity
+	{
+		private DepthPartner component;
 
-            public override void Update() {
-                base.Update();
-                if (component.Entity != null && component.Entity.Active)
-                    component.OnUpdate?.Invoke();
-            }
+		public PartnerEntity(DepthPartner component) : base()
+		{
+			this.component = component;
+			Depth = component.Depth;
+		}
 
-            public override void Render() {
-                base.Render();
-                if (component.Entity != null && component.Entity.Visible)
-                    component.OnRender?.Invoke();
-            }
-        }
-    }
+		public override void Update()
+		{
+			base.Update();
+			if (component.Entity != null && component.Entity.Active)
+			{
+				component.OnUpdate?.Invoke();
+			}
+		}
+
+		public override void Render()
+		{
+			base.Render();
+			if (component.Entity != null && component.Entity.Visible)
+			{
+				component.OnRender?.Invoke();
+			}
+		}
+	}
 }

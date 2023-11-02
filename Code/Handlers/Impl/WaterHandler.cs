@@ -1,34 +1,29 @@
-﻿using Celeste.Mod.EeveeHelper.Compat;
-using Celeste.Mod.EeveeHelper.Components;
+﻿using Celeste.Mod.EeveeHelper.Components;
 using Microsoft.Xna.Framework;
 using Monocle;
-using MonoMod.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Celeste.Mod.EeveeHelper.Handlers.Impl {
-    class WaterHandler : EntityHandler, IMoveable {
-        private DynamicData entityData;
+namespace Celeste.Mod.EeveeHelper.Handlers.Impl;
 
-        public WaterHandler(Entity entity) : base(entity) {
-            entityData = DynamicData.For(entity as Water);
-        }
+class WaterHandler : EntityHandler, IMoveable
+{
+	private Water water;
 
-        public bool Move(Vector2 move, Vector2? liftSpeed) {
-            if (!(Container as EntityContainerMover).IgnoreAnchors) {
-                var surfaces = entityData.Get<List<Water.Surface>>("Surfaces");
-                for (int i = 0; i < (surfaces.Count); i++) {
-                    surfaces[i].Position += move;
-                }
-                entityData.Set("Surfaces", surfaces);
-            }
-            return false;
-        }
+	public WaterHandler(Entity entity) : base(entity)
+	{
+		water = entity as Water;
+	}
 
-        public void PreMove() {
-        }
-    }
+	public bool Move(Vector2 move, Vector2? liftSpeed)
+	{
+		if (!(Container as EntityContainerMover).IgnoreAnchors)
+		{
+			foreach (var surface in water.Surfaces)
+			{
+				surface.Position += move;
+			}
+		}
+		return false;
+	}
+
+	public void PreMove() { }
 }

@@ -32,10 +32,11 @@
 
     <ItemGroup>
         <PackageReference Include="MonoMod.RuntimeDetour" Version="22.01.04.03" />
+        <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>
-        <Reference Include="$(CelestePrefix)\Celeste.exe" />
+        <Reference Include="$(CelestePrefix)\Celeste.exe" Publicize="true" />
         <Reference Include="$(CelestePrefix)\MMHOOK_Celeste.dll" />
         <Reference Include="lib-stripped\StyleMaskHelper.dll" />
     </ItemGroup>

@@ -1,26 +1,25 @@
 ﻿using Monocle;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Celeste.Mod.EeveeHelper.Components {
-    public class TagAdderComponent : Component {
-        public int Tags;
+namespace Celeste.Mod.EeveeHelper.Components;
 
-        public TagAdderComponent(int tags) : base(true, true) {
-            Tags = tags;
-        }
+public class TagAdderComponent : Component
+{
+	public int Tags;
 
-        public override void Added(Entity entity) {
-            base.Added(entity);
-            entity.AddTag(Tags);
-        }
+	public TagAdderComponent(int tags) : base(true, true)
+	{
+		Tags = tags;
+	}
 
-        public override void Update() {
-            base.Update();
-            Entity.AddTag(Tags);
-        }
-    }
+	public override void Added(Entity entity)
+	{
+		base.Added(entity);
+		entity.AddTag(Tags);
+	}
+
+	public override void Update()
+	{
+		base.Update();
+		Entity.AddTag(Tags);
+	}
 }

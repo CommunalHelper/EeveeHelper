@@ -5,52 +5,64 @@ using Microsoft.Xna.Framework;
 using Monocle;
 using System.Collections.Generic;
 
-namespace Celeste.Mod.EeveeHelper.Entities.Modifiers {
-    [CustomEntity("EeveeHelper/DepthModifier")]
-    public class DepthModifier : Entity, IContainer {
-        public int TargetDepth;
+namespace Celeste.Mod.EeveeHelper.Entities.Modifiers;
 
-        public EntityContainer Container { get; set; }
-        private Dictionary<Entity, int> lastDepths = new Dictionary<Entity, int>();
+[CustomEntity("EeveeHelper/DepthModifier")]
+public class DepthModifier : Entity, IContainer
+{
+	public int TargetDepth;
 
-        public DepthModifier(EntityData data, Vector2 offset) : base(data.Position + offset) {
-            Collider = new Hitbox(data.Width, data.Height);
-            Depth = Depths.Top - 9;
+	public EntityContainer Container { get; set; }
+	private Dictionary<Entity, int> lastDepths = new();
 
-            TargetDepth = data.Int("depth");
+	public DepthModifier(EntityData data, Vector2 offset) : base(data.Position + offset)
+	{
+		Collider = new Hitbox(data.Width, data.Height);
+		Depth = Depths.Top - 9;
 
-            Add(Container = new EntityContainer(data) {
-                DefaultIgnored = e => e.Get<EntityContainer>() != null,
-                OnAttach = ModifyDepth,
-                OnDetach = RestoreDepth
-            });
-        }
+		TargetDepth = data.Int("depth");
 
-        public override void Update() {
-            base.Update();
+		Add(Container = new EntityContainer(data)
+		{
+			DefaultIgnored = e => e.Get<EntityContainer>() != null,
+			OnAttach = ModifyDepth,
+			OnDetach = RestoreDepth
+		});
+	}
 
-            foreach (var handler in Container.Contained)
-                ModifyDepth(handler);
-        }
+	public override void Update()
+	{
+		base.Update();
 
-        private void ModifyDepth(IEntityHandler handler) {
-            var entity = handler.Entity;
+		foreach (var handler in Container.Contained)
+		{
+			ModifyDepth(handler);
+		}
+	}
 
-            if (!lastDepths.ContainsKey(entity))
-                lastDepths.Add(entity, entity.Depth);
+	private void ModifyDepth(IEntityHandler handler)
+	{
+		var entity = handler.Entity;
 
-            entity.Depth = TargetDepth;
-        }
+		if (!lastDepths.ContainsKey(entity))
+		{
+			lastDepths.Add(entity, entity.Depth);
+		}
 
-        private void RestoreDepth(IEntityHandler handler) {
-            var entity = handler.Entity;
+		entity.Depth = TargetDepth;
+	}
 
-            if (!lastDepths.TryGetValue(entity, out var depth))
-                return;
+	private void RestoreDepth(IEntityHandler handler)
+	{
+		var entity = handler.Entity;
 
-            entity.Depth = depth;
+		if (!lastDepths.TryGetValue(entity, out var depth))
+		{
+			return;
+		}
 
-            lastDepths.Remove(entity);
-        }
-    }
+		entity.Depth = depth;
+
+		lastDepths.Remove(entity);
+	}
 }

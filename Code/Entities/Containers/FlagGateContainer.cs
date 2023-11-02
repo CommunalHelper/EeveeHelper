@@ -4,288 +4,350 @@ using Microsoft.Xna.Framework;
 using Monocle;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Celeste.Mod.EeveeHelper.Entities.Containers {
-    [CustomEntity("EeveeHelper/FlagGateContainer")]
-    public class FlagGateContainer : Entity, IContainer {
-        // Originally "im so hecking gay".GetHashCode(), which desynced TASes on different platforms
-        // Hardcoded to keep compatibility with older TASes but sync across future ones
-        private const int RandomGay = -1569374549;
+namespace Celeste.Mod.EeveeHelper.Entities.Containers;
 
-        public EntityContainer Container {
-            get {
-                return _Container;
-            }
-            set {
-                if (value is EntityContainerMover mover)
-                    _Container = mover;
-            }
-        }
+[CustomEntity("EeveeHelper/FlagGateContainer")]
+public class FlagGateContainer : Entity, IContainer
+{
+	// Originally "im so hecking gay".GetHashCode(), which desynced TASes on different platforms
+	// Hardcoded to keep compatibility with older TASes but sync across future ones
+	private const int RandomGay = -1569374549;
 
-        public EntityContainerMover _Container;
+	public EntityContainer Container
+	{
+		get => _Container;
+		set
+		{
+			if (value is EntityContainerMover mover)
+			{
+				_Container = mover;
+			}
+		}
+	}
 
-        private Vector2[] nodes;
-        private string flag; // replace
-        private bool notFlag; // replace
-        //private bool resetFlags;
-        private bool canReturn;
-        private float shakeTime;
-        private float moveTime;
-        //private bool progression;
-        private Ease.Easer easer;
-        private Color inactiveColor;
-        private Color activeColor;
-        private Color finishColor;
-        private bool iconVisible;
-        private bool staticFit;
-        private bool playSounds;
+	public EntityContainerMover _Container;
 
-        private Vector2 startPos;
-        private Vector2 anchorPos;
-        private Vector2 offset;
-        private Sprite icon;
-        private Vector2 iconOffset;
-        private Wiggler wiggler;
-        private SoundSource openSfx;
-        private bool moving;
-        private bool cancelMoving;
-        private bool activated; // replace
-        //private bool[] wasEnabled;
-        private bool vanilla;
+	private Vector2[] nodes;
+	private string flag; // replace
+	private bool notFlag; // replace
+						  //private bool resetFlags;
+	private bool canReturn;
+	private float shakeTime;
+	private float moveTime;
+	//private bool progression;
+	private Ease.Easer easer;
+	private Color inactiveColor;
+	private Color activeColor;
+	private Color finishColor;
+	private bool iconVisible;
+	private bool staticFit;
+	private bool playSounds;
 
-        private bool shaking;
-        private float shakeTimer;
-        private Vector2 shakeAmount;
-        private Random shakeRand;
+	private Vector2 startPos;
+	private Vector2 anchorPos;
+	private Vector2 offset;
+	private Sprite icon;
+	private Vector2 iconOffset;
+	private Wiggler wiggler;
+	private SoundSource openSfx;
+	private bool moving;
+	private bool cancelMoving;
+	private bool activated; // replace
+	//private bool[] wasEnabled;
+	private bool vanilla;
 
-        public FlagGateContainer(EntityData data, Vector2 offset): base(data.Position + offset) {
-            Collider = new Hitbox(data.Width, data.Height);
-            Depth = Depths.BGDecals - 1;
+	private bool shaking;
+	private float shakeTimer;
+	private Vector2 shakeAmount;
+	private Random shakeRand;
 
-            var rawNodes = data.NodesOffset(offset);
-            if (rawNodes.Length > 0)
-                iconOffset = rawNodes[0] - Center;
-            nodes = rawNodes.Skip(1).ToArray();
-            for (var i = 0; i < nodes.Length; i++)
-                nodes[i] += new Vector2(Width / 2f, Height / 2f);
-            EeveeUtils.ParseFlagAttr(data.Attr("moveFlag"), out flag, out notFlag);
-            //resetFlags = data.Bool("resetFlags", true);
-            canReturn = data.Bool("canReturn", true);
-            shakeTime = data.Float("shakeTime", 0.5f);
-            moveTime = data.Float("moveTime", 2f);
-            //progression = data.Bool("progression");
-            easer = EeveeHelperModule.EaseTypes[data.Attr("easing", "CubeOut")];
-            inactiveColor = data.HexColor("inactiveColor", Calc.HexToColor("5fcde4"));
-            activeColor = data.HexColor("activeColor", Color.White);
-            finishColor = data.HexColor("finishColor", Calc.HexToColor("f141df"));
-            iconVisible = data.Bool("iconVisible");
-            staticFit = data.Bool("staticFit");
-            playSounds = data.Bool("playSounds");
-            var iconName = data.Attr("icon", "objects/switchgate/icon");
+	public FlagGateContainer(EntityData data, Vector2 offset) : base(data.Position + offset)
+	{
+		Collider = new Hitbox(data.Width, data.Height);
+		Depth = Depths.BGDecals - 1;
 
-            shakeRand = new Random(RandomGay);
+		var rawNodes = data.NodesOffset(offset);
+		if (rawNodes.Length > 0)
+		{
+			iconOffset = rawNodes[0] - Center;
+		}
 
-            startPos = anchorPos = Center;
-            //wasEnabled = new bool[flags.Length];
+		nodes = rawNodes.Skip(1).ToArray();
+		for (var i = 0; i < nodes.Length; i++)
+		{
+			nodes[i] += new Vector2(Width / 2f, Height / 2f);
+		}
 
-            //if (flags.Length == 0 && nodes.Length > 0)
-            if (string.IsNullOrEmpty(flag))
-                vanilla = true;
+		EeveeUtils.ParseFlagAttr(data.Attr("moveFlag"), out flag, out notFlag);
+		//resetFlags = data.Bool("resetFlags", true);
+		canReturn = data.Bool("canReturn", true);
+		shakeTime = data.Float("shakeTime", 0.5f);
+		moveTime = data.Float("moveTime", 2f);
+		//progression = data.Bool("progression");
+		easer = EeveeHelperModule.EaseTypes[data.Attr("easing", "CubeOut")];
+		inactiveColor = data.HexColor("inactiveColor", Calc.HexToColor("5fcde4"));
+		activeColor = data.HexColor("activeColor", Color.White);
+		finishColor = data.HexColor("finishColor", Calc.HexToColor("f141df"));
+		iconVisible = data.Bool("iconVisible");
+		staticFit = data.Bool("staticFit");
+		playSounds = data.Bool("playSounds");
+		var iconName = data.Attr("icon", "objects/switchgate/icon");
 
-            Add(icon = new Sprite(GFX.Game, iconName));
-            icon.Add("spin", "", 0.1f, "spin");
-            icon.Play("spin");
-            icon.Rate = 0f;
-            icon.Color = inactiveColor;
-            icon.Position = new Vector2(Width / 2f, Height / 2f) + iconOffset;
-            icon.Visible = iconVisible;
-            icon.CenterOrigin();
+		shakeRand = new Random(RandomGay);
 
-            Add(wiggler = Wiggler.Create(0.5f, 4f, f => icon.Scale = Vector2.One * (1f + f)));
-            Add(openSfx = new SoundSource());
+		startPos = anchorPos = Center;
+		//wasEnabled = new bool[flags.Length];
 
-            Add(_Container = new EntityContainerMover(data, true) {
-                OnFit = OnFit,
-                DefaultIgnored = e => e is FlagGateContainer,
-                OnAttach = h => Depth = Math.Min(Depth, h.Entity.Depth - 1)
-            });
-        }
+		//if (flags.Length == 0 && nodes.Length > 0)
+		if (string.IsNullOrEmpty(flag))
+		{
+			vanilla = true;
+		}
 
-        public override void Awake(Scene scene) {
-            base.Awake(scene);
+		Add(icon = new Sprite(GFX.Game, iconName));
+		icon.Add("spin", "", 0.1f, "spin");
+		icon.Play("spin");
+		icon.Rate = 0f;
+		icon.Color = inactiveColor;
+		icon.Position = new Vector2(Width / 2f, Height / 2f) + iconOffset;
+		icon.Visible = iconVisible;
+		icon.CenterOrigin();
 
-            activated = vanilla ?
-                Switch.CheckLevelFlag(scene as Level) :
-                ((scene as Level).Session.GetFlag(flag) != notFlag);
+		Add(wiggler = Wiggler.Create(0.5f, 4f, f => icon.Scale = Vector2.One * (1f + f)));
+		Add(openSfx = new SoundSource());
 
-            if (activated) {
-                MoveTo(nodes[0]);
-                icon.Rate = 0f;
-                icon.SetAnimationFrame(0);
-                icon.Color = finishColor;
-            }
-        }
+		Add(_Container = new EntityContainerMover(data, true)
+		{
+			OnFit = OnFit,
+			DefaultIgnored = e => e is FlagGateContainer,
+			OnAttach = h => Depth = Math.Min(Depth, h.Entity.Depth - 1)
+		});
+	}
 
-        public override void Update() {
-            base.Update();
+	public override void Awake(Scene scene)
+	{
+		base.Awake(scene);
 
-            var newActivated = vanilla ?
-                Switch.Check(Scene) :
-                (SceneAs<Level>().Session.GetFlag(flag) != notFlag);
+		activated = vanilla ?
+			Switch.CheckLevelFlag(scene as Level) :
+			((scene as Level).Session.GetFlag(flag) != notFlag);
 
-            if (newActivated != activated && (!activated || canReturn)) {
-                activated = newActivated;
-                Add(new Coroutine(Sequence(activated ? nodes[0] : startPos)));
-            }
+		if (activated)
+		{
+			MoveTo(nodes[0]);
+			icon.Rate = 0f;
+			icon.SetAnimationFrame(0);
+			icon.Color = finishColor;
+		}
+	}
 
-            var newDepth = Depths.BGDecals - 1;
-            foreach (var entity in _Container.GetEntities())
-                newDepth = Math.Min(newDepth, entity.Depth - 1);
-            Depth = newDepth;
+	public override void Update()
+	{
+		base.Update();
 
-            if (shaking) {
-                if (Scene.OnInterval(0.04f)) {
-                    shakeAmount = shakeRand.ShakeVector();
-                }
-                if (shakeTimer > 0f) {
-                    shakeTimer -= Engine.DeltaTime;
-                    if (shakeTimer <= 0f) {
-                        shaking = false;
-                        StopShaking();
-                    }
-                }
-            }
+		var newActivated = vanilla ?
+			Switch.Check(Scene) :
+			(SceneAs<Level>().Session.GetFlag(flag) != notFlag);
 
-            MoveTo(anchorPos);
-        }
+		if (newActivated != activated && (!activated || canReturn))
+		{
+			activated = newActivated;
+			Add(new Coroutine(Sequence(activated ? nodes[0] : startPos)));
+		}
 
-        public override void Render() {
-            if (iconVisible)
-                icon.DrawOutline();
+		var newDepth = Depths.BGDecals - 1;
+		foreach (var entity in _Container.GetEntities())
+		{
+			newDepth = Math.Min(newDepth, entity.Depth - 1);
+		}
 
-            base.Render();
-        }
+		Depth = newDepth;
 
-        private void OnFit(Vector2 pos, float width, float height) {
-            var lastCenter = Center;
-            Position = pos;
-            Collider.Width = width;
-            Collider.Height = height;
-            icon.Position = new Vector2(Width / 2f, Height / 2f) + iconOffset;
-            if (staticFit) {
-                _Container.DoMoveAction(() => Center = lastCenter);
-            } else {
-                offset += Center - lastCenter;
-            }
-        }
+		if (shaking)
+		{
+			if (Scene.OnInterval(0.04f))
+			{
+				shakeAmount = shakeRand.ShakeVector();
+			}
+			if (shakeTimer > 0f)
+			{
+				shakeTimer -= Engine.DeltaTime;
+				if (shakeTimer <= 0f)
+				{
+					shaking = false;
+					StopShaking();
+				}
+			}
+		}
 
-        private void MoveTo(Vector2 center) {
-            anchorPos = center;
-            if (Center != center + offset + shakeAmount)
-                _Container.DoMoveAction(() => Center = center + offset + shakeAmount);
-        }
+		MoveTo(anchorPos);
+	}
 
-        public void StartShaking(float time = 0f) {
-            shaking = true;
-            shakeTimer = time;
-        }
+	public override void Render()
+	{
+		if (iconVisible)
+		{
+			icon.DrawOutline();
+		}
 
-        public void StopShaking() {
-            shaking = false;
-            shakeAmount = Vector2.Zero;
-        }
+		base.Render();
+	}
 
-        private IEnumerator Sequence(Vector2 node) {
-            while (moving) {
-                cancelMoving = true;
-                yield return null;
-            }
-            cancelMoving = false;
-            moving = true;
-            var start = anchorPos;
-            wiggler.Stop();
-            icon.Scale = Vector2.One;
-            if (node != start) {
-                if (shakeTime > 0f) {
-                    yield return 0.1f;
-                    if (playSounds)
-                        openSfx.Play("event:/game/general/touchswitch_gate_open");
-                    StartShaking(shakeTime);
-                    while (icon.Rate < 1f) {
-                        var lastColor = icon.Color;
-                        icon.Color = Color.Lerp(lastColor, activeColor, icon.Rate);
-                        icon.Rate += Engine.DeltaTime / shakeTime;
-                        yield return null;
-                    }
-                    yield return 0.1f;
-                } else {
-                    if (playSounds)
-                        openSfx.Play("event:/game/general/touchswitch_gate_open");
-                    icon.Rate = 1f;
-                    icon.Color = activeColor;
-                }
-                if (cancelMoving) {
-                    moving = false;
-                    yield break;
-                }
-                var tween = Tween.Create(Tween.TweenMode.Oneshot, easer, moveTime, start: true);
-                var waiting = true;
-                tween.OnUpdate = (t) => MoveTo(Vector2.Lerp(start, node, t.Eased));
-                tween.OnComplete = (t) => waiting = false;
-                Add(tween);
-                while (waiting) {
-                    if (cancelMoving) {
-                        tween.Stop();
-                        Remove(tween);
-                        moving = false;
-                        yield break;
-                    }
-                    yield return null;
-                }
-                Remove(tween);
-                MoveTo(node);
-                if (playSounds)
-                    Audio.Play("event:/game/general/touchswitch_gate_finish", Position);
-                if (shakeTime > 0f)
-                    StartShaking(0.2f);
-                while (icon.Rate > 0f && !cancelMoving) {
-                    icon.Color = Color.Lerp(activeColor, activated ? finishColor : inactiveColor, 1f - icon.Rate);
-                    icon.Rate -= Engine.DeltaTime * 4f;
-                    yield return null;
-                }
-                if (cancelMoving) {
-                    moving = false;
-                    yield break;
-                }
-                icon.Rate = 0f;
-                icon.SetAnimationFrame(0);
-                wiggler.Start();
-                if (iconVisible) {
-                    bool was = Collidable;
-                    Collidable = false;
-                    for (int i = 0; i < 32; i++) {
-                        float angle = Calc.Random.NextFloat((float)Math.PI * 2f);
-                        SceneAs<Level>().ParticlesFG.Emit(TouchSwitch.P_Fire, Center + iconOffset + Calc.AngleToVector(angle, 4f), angle);
-                    }
-                    Collidable = was;
-                }
-            } else {
-                icon.Rate = 1f;
-                while (icon.Rate > 0f && !cancelMoving) {
-                    var lastColor = icon.Color;
-                    icon.Color = Color.Lerp(lastColor, activated ? finishColor : inactiveColor, 1f - icon.Rate);
-                    icon.Rate -= Engine.DeltaTime * 4f;
-                    yield return null;
-                }
-                icon.Color = finishColor;
-                icon.Rate = 0f;
-                icon.SetAnimationFrame(0);
-            }
-            moving = false;
-        }
-    }
+	private void OnFit(Vector2 pos, float width, float height)
+	{
+		var lastCenter = Center;
+		Position = pos;
+		Collider.Width = width;
+		Collider.Height = height;
+		icon.Position = new Vector2(Width / 2f, Height / 2f) + iconOffset;
+		if (staticFit)
+		{
+			_Container.DoMoveAction(() => Center = lastCenter);
+		}
+		else
+		{
+			offset += Center - lastCenter;
+		}
+	}
+
+	private void MoveTo(Vector2 center)
+	{
+		anchorPos = center;
+		if (Center != center + offset + shakeAmount)
+		{
+			_Container.DoMoveAction(() => Center = center + offset + shakeAmount);
+		}
+	}
+
+	public void StartShaking(float time = 0f)
+	{
+		shaking = true;
+		shakeTimer = time;
+	}
+
+	public void StopShaking()
+	{
+		shaking = false;
+		shakeAmount = Vector2.Zero;
+	}
+
+	private IEnumerator Sequence(Vector2 node)
+	{
+		while (moving)
+		{
+			cancelMoving = true;
+			yield return null;
+		}
+		cancelMoving = false;
+		moving = true;
+		var start = anchorPos;
+		wiggler.Stop();
+		icon.Scale = Vector2.One;
+		if (node != start)
+		{
+			if (shakeTime > 0f)
+			{
+				yield return 0.1f;
+				if (playSounds)
+				{
+					openSfx.Play("event:/game/general/touchswitch_gate_open");
+				}
+
+				StartShaking(shakeTime);
+				while (icon.Rate < 1f)
+				{
+					var lastColor = icon.Color;
+					icon.Color = Color.Lerp(lastColor, activeColor, icon.Rate);
+					icon.Rate += Engine.DeltaTime / shakeTime;
+					yield return null;
+				}
+				yield return 0.1f;
+			}
+			else
+			{
+				if (playSounds)
+				{
+					openSfx.Play("event:/game/general/touchswitch_gate_open");
+				}
+
+				icon.Rate = 1f;
+				icon.Color = activeColor;
+			}
+			if (cancelMoving)
+			{
+				moving = false;
+				yield break;
+			}
+			var tween = Tween.Create(Tween.TweenMode.Oneshot, easer, moveTime, start: true);
+			var waiting = true;
+			tween.OnUpdate = (t) => MoveTo(Vector2.Lerp(start, node, t.Eased));
+			tween.OnComplete = (t) => waiting = false;
+			Add(tween);
+			while (waiting)
+			{
+				if (cancelMoving)
+				{
+					tween.Stop();
+					Remove(tween);
+					moving = false;
+					yield break;
+				}
+				yield return null;
+			}
+			Remove(tween);
+			MoveTo(node);
+			if (playSounds)
+			{
+				Audio.Play("event:/game/general/touchswitch_gate_finish", Position);
+			}
+
+			if (shakeTime > 0f)
+			{
+				StartShaking(0.2f);
+			}
+
+			while (icon.Rate > 0f && !cancelMoving)
+			{
+				icon.Color = Color.Lerp(activeColor, activated ? finishColor : inactiveColor, 1f - icon.Rate);
+				icon.Rate -= Engine.DeltaTime * 4f;
+				yield return null;
+			}
+			if (cancelMoving)
+			{
+				moving = false;
+				yield break;
+			}
+			icon.Rate = 0f;
+			icon.SetAnimationFrame(0);
+			wiggler.Start();
+			if (iconVisible)
+			{
+				var was = Collidable;
+				Collidable = false;
+				for (var i = 0; i < 32; i++)
+				{
+					var angle = Calc.Random.NextFloat((float)Math.PI * 2f);
+					SceneAs<Level>().ParticlesFG.Emit(TouchSwitch.P_Fire, Center + iconOffset + Calc.AngleToVector(angle, 4f), angle);
+				}
+				Collidable = was;
+			}
+		}
+		else
+		{
+			icon.Rate = 1f;
+			while (icon.Rate > 0f && !cancelMoving)
+			{
+				var lastColor = icon.Color;
+				icon.Color = Color.Lerp(lastColor, activated ? finishColor : inactiveColor, 1f - icon.Rate);
+				icon.Rate -= Engine.DeltaTime * 4f;
+				yield return null;
+			}
+			icon.Color = finishColor;
+			icon.Rate = 0f;
+			icon.SetAnimationFrame(0);
+		}
+		moving = false;
+	}
 }

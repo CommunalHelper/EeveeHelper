@@ -63,8 +63,8 @@ public sealed class InheritedDynData : IDisposable, IEnumerable<KeyValuePair<str
 
 	public bool TryGet<T>(string name, out T value)
 	{
-		var success = TryGet(name, out T result);
-		value = success ? result : default;
+		var success = TryGet(name, out var result);
+		value = success ? (T)result : default;
 		return success;
 	}
 

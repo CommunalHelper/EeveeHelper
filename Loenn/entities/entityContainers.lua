@@ -68,6 +68,8 @@ local attachedContainer = {
             attachMode = "RoomStart",
             attachFlag = "",
             attachTo = "",
+            relativeAttachX = "",
+            relativeAttachY = "",
             restrictToNode = true,
             onlyX = false,
             onlyY = false,
@@ -76,7 +78,7 @@ local attachedContainer = {
             destroyable = true,
         }
     },
-    fieldOrder = { "x", "y", "width", "height", "containMode", "containFlag", "whitelist", "blacklist", "attachMode", "attachFlag", "attachTo" },
+    fieldOrder = { "x", "y", "width", "height", "containMode", "containFlag", "whitelist", "blacklist", "attachMode", "attachFlag", "relativeAttachX", "relativeAttachY", "attachTo" },
 }
 
 local floatyContainer = {

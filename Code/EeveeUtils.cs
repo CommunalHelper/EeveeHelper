@@ -63,4 +63,37 @@ public static class EeveeUtils
 
 		return GetValueOfType(dict, type.BaseType);
 	}
+
+	public static float? OptionalFloat(EntityData data, string key, float? defaultValue = null)
+	{
+		if (!data.Has(key))
+		{
+			return defaultValue;
+		}
+
+		if (float.TryParse(data.Attr(key), out var result))
+		{
+			return result;
+		}
+
+		return null;
+	}
+
+	public static Vector2? OptionalVector(EntityData data, string keyX, string keyY, Vector2? defaultValue = null)
+	{
+		if (!data.Has(keyX) || !data.Has(keyY))
+		{
+			return defaultValue;
+		}
+
+		var definedX = float.TryParse(data.Attr(keyX), out var x);
+		var definedY = float.TryParse(data.Attr(keyY), out var y);
+
+		if (definedX || definedY)
+		{
+			return new Vector2(x, y);
+		}
+
+		return null;
+	}
 }

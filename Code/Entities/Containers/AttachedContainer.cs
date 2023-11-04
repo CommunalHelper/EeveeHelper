@@ -22,6 +22,7 @@ public class AttachedContainer : Entity, IContainer
 	private bool matchVisible;
 	private bool destroyable;
 	private Vector2? node;
+	private Vector2? relativeAttachPos;
 
 	public EntityContainerMover _Container;
 	private StaticMover mover;
@@ -35,6 +36,7 @@ public class AttachedContainer : Entity, IContainer
 	private Dictionary<Entity, Tuple<bool, bool, bool>> lastStates = new();
 	private bool legacyDestroySometimesAnyway;
 	private bool updatedOnce;
+	private bool needMoverAttach;
 
 	public AttachedContainer(EntityData data, Vector2 offset) : base(data.Position + offset)
 	{
@@ -53,6 +55,7 @@ public class AttachedContainer : Entity, IContainer
 		matchVisible = data.Bool("matchVisible");
 		destroyable = data.Bool("destroyable");
 		legacyDestroySometimesAnyway = !data.Has("destroyable");
+		relativeAttachPos = EeveeUtils.OptionalVector(data, "relativeAttachX", "relativeAttachY");
 
 		var nodes = data.NodesOffset(offset);
 		if (nodes.Length > 0)
@@ -73,6 +76,7 @@ public class AttachedContainer : Entity, IContainer
 			{
 				JumpThruChecker = (entity) => IsRiding(entity, true),
 				SolidChecker = (entity) => IsRiding(entity, true),
+				OnAttach = (entity) => { if (attached) { OnAttach(entity); } },
 				OnMove = (amount) => { if (attached) { OnMove(amount); } },
 				OnShake = (amount) => { if (attached) { OnMoveSprites(amount); } },
 				OnEnable = () => { if (attached) { OnEnable(); } },
@@ -93,6 +97,8 @@ public class AttachedContainer : Entity, IContainer
 
 	public override void Awake(Scene scene)
 	{
+		updatedOnce = false;
+
 		attached = string.IsNullOrEmpty(attachFlag) || SceneAs<Level>().Session.GetFlag(attachFlag) != notAttachFlag;
 
 		if (attachMode == EntityContainer.ContainMode.RoomStart)
@@ -111,9 +117,16 @@ public class AttachedContainer : Entity, IContainer
 			}
 		}
 
-		updatedOnce = false;
-
 		base.Awake(scene);
+
+		if (customAttached != null)
+		{
+			OnAttach(customAttached);
+		}
+		else if (attached && mover?.Platform != null)
+		{
+			OnAttach(mover.Platform);
+		}
 	}
 
 	public override void Update()
@@ -124,14 +137,14 @@ public class AttachedContainer : Entity, IContainer
 
 		if (!updatedOnce)
 		{
+			updatedOnce = true;
+
 			if (newAttached && attachMode == EntityContainer.ContainMode.DelayedRoomStart)
 			{
 				attached = newAttached;
 
 				TryAttach(true);
 			}
-
-			updatedOnce = true;
 		}
 
 		if (attachMode != EntityContainer.ContainMode.Always)
@@ -271,7 +284,17 @@ public class AttachedContainer : Entity, IContainer
 				if (closest != null)
 				{
 					customAttached = closest;
+
+					// Only run OnAttach here if we're attaching after Awake
+					// otherwise the order of operations means the container may move
+					// before it contains entities
+					if (updatedOnce)
+					{
+						OnAttach(customAttached);
+					}
+
 					lastAttachedPos = EeveeUtils.GetPosition(customAttached);
+
 					return true;
 				}
 			}
@@ -280,11 +303,20 @@ public class AttachedContainer : Entity, IContainer
 				customAttached = firstAttached;
 				if (customAttached != null)
 				{
+					if (updatedOnce)
+					{
+						OnAttach(customAttached);
+					}
+
 					lastAttachedPos = EeveeUtils.GetPosition(customAttached);
 				}
 
 				return true;
 			}
+		}
+		else if (mover.Platform != null && updatedOnce)
+		{
+			OnAttach(mover.Platform);
 		}
 		return false;
 	}
@@ -317,6 +349,31 @@ public class AttachedContainer : Entity, IContainer
 				|| CollideCheckOutside(entity, Position - Vector2.UnitY)
 				|| CollideCheckOutside(entity, Position + Vector2.UnitX)
 				|| CollideCheckOutside(entity, Position - Vector2.UnitX);
+		}
+	}
+
+	private void OnAttach(Entity entity)
+	{
+		if (!relativeAttachPos.HasValue)
+		{
+			return;
+		}
+
+		var newPos = Position;
+		var attachedPos = EeveeUtils.GetPosition(entity);
+
+		if (!onlyY)
+		{
+			newPos.X = attachedPos.X + relativeAttachPos.Value.X;
+		}
+		if (!onlyX)
+		{
+			newPos.Y = attachedPos.Y + relativeAttachPos.Value.Y;
+		}
+
+		if (Position != newPos)
+		{
+			_Container.DoMoveAction(() => Position = newPos, (h, move) => entity is Platform platform ? platform.LiftSpeed : Vector2.Zero);
 		}
 	}
 

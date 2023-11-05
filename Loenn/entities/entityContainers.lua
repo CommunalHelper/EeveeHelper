@@ -1,3 +1,5 @@
+local utils = require("utils")
+
 local holdableContainer = {
     name = "EeveeHelper/HoldableContainer",
     fillColor = { 1.0, 0.6, 0.6, 0.4 },
@@ -78,7 +80,13 @@ local attachedContainer = {
             destroyable = true,
         }
     },
+
     fieldOrder = { "x", "y", "width", "height", "containMode", "containFlag", "whitelist", "blacklist", "attachMode", "attachFlag", "relativeAttachX", "relativeAttachY", "attachTo" },
+
+    nodeRectangle = function(room, entity, node)
+        return utils.rectangle(node.x - 2, node.y - 2, 5, 5)
+    end,
+    nodeLineRenderOffset = {0, 0}
 }
 
 local floatyContainer = {

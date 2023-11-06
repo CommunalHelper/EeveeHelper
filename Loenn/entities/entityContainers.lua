@@ -1,7 +1,19 @@
+local drawableSprite = require("structs.drawable_sprite")
+local drawableRectangle = require("structs.drawable_rectangle")
+local depths = require("consts.object_depths")
+local drawing = require("utils.drawing")
+local utils = require("utils")
+
+local containerFill = { 1.0, 0.6, 0.6, 0.4 }
+local containerBorder = { 1.0, 0.6, 0.6, 1 }
+
+local modifierFill = { 0.6, 1.0, 0.6, 0.4 }
+local modifierBorder = { 0.6, 1.0, 0.6, 1 }
+
 local holdableContainer = {
     name = "EeveeHelper/HoldableContainer",
-    fillColor = { 1.0, 0.6, 0.6, 0.4 },
-    borderColor = { 1.0, 0.6, 0.6, 1 },
+    fillColor = containerFill,
+    borderColor = containerBorder,
 
     placements = {
         default = {
@@ -47,8 +59,8 @@ local holdableContainer = {
 
 local attachedContainer = {
     name = "EeveeHelper/AttachedContainer",
-    fillColor = { 1.0, 0.6, 0.6, 0.4 },
-    borderColor = { 1.0, 0.6, 0.6, 1 },
+    fillColor = containerFill,
+    borderColor = containerBorder,
     nodeLimits = { 0, 1 },
     nodeLineRenderType = "line",
 
@@ -78,13 +90,19 @@ local attachedContainer = {
             destroyable = true,
         }
     },
+
     fieldOrder = { "x", "y", "width", "height", "containMode", "containFlag", "whitelist", "blacklist", "attachMode", "attachFlag", "relativeAttachX", "relativeAttachY", "attachTo" },
+
+    nodeRectangle = function(room, entity, node)
+        return utils.rectangle(node.x - 2, node.y - 2, 5, 5)
+    end,
+    nodeLineRenderOffset = {0, 0}
 }
 
 local floatyContainer = {
     name = "EeveeHelper/FloatyContainer",
-    fillColor = { 1.0, 0.6, 0.6, 0.4 },
-    borderColor = { 1.0, 0.6, 0.6, 1 },
+    fillColor = containerFill,
+    borderColor = containerBorder,
 
     placements = {
         name = "default",
@@ -113,8 +131,8 @@ local floatyContainer = {
 
 local SMWTrackContainer = {
     name = "EeveeHelper/SMWTrackContainer",
-    fillColor = { 1.0, 0.6, 0.6, 0.4 },
-    borderColor = { 1.0, 0.6, 0.6, 1 },
+    fillColor = containerFill,
+    borderColor = containerBorder,
 
     placements = {
         default = {
@@ -194,8 +212,8 @@ local SMWTrackContainer = {
 
 local flagGateContainer = {
     name = "EeveeHelper/FlagGateContainer",
-    fillColor = { 1.0, 0.6, 0.6, 0.4 },
-    borderColor = { 1.0, 0.6, 0.6, 1 },
+    fillColor = containerFill,
+    borderColor = containerBorder,
     nodeLimits = {2, 2},
     nodeLineRenderType = "line",
 
@@ -245,13 +263,102 @@ local flagGateContainer = {
                 playSounds = false
             }
         }
-    }
+    },
+
+    sprite = function(room, entity)
+        local sprites = {}
+
+        local rectangle = utils.rectangle(entity.x, entity.y, entity.width, entity.height)
+        local rectangleSprites = drawableRectangle.fromRectangle("bordered", rectangle, containerFill, containerBorder):getDrawableSprite()
+
+        if utils.typeof(rectangleSprites) == "table" then
+            for _, sprite in ipairs(rectangleSprites) do
+                table.insert(sprites, sprite)
+            end
+
+        else
+            table.insert(sprites, rectangleSprites)
+        end
+
+        if entity.nodes and #entity.nodes >= 1 and entity.iconVisible then
+            local iconSprite = drawableSprite.fromTexture(entity.icon .. "00", entity)
+
+            iconSprite.depth = depths.top
+            iconSprite:setPosition(entity.nodes[1].x, entity.nodes[1].y)
+            iconSprite:setJustification(0.5, 0.5)
+
+            table.insert(sprites, iconSprite)
+        end
+
+        return sprites
+    end,
+
+    nodeRectangle = function(room, entity, node, nodeIndex)
+        if nodeIndex == 1 then
+            local sprite = drawableSprite.fromTexture(entity.icon .. "00", entity)
+
+            sprite:setPosition(node.x, node.y)
+            sprite:setJustification(0.5, 0.5)
+
+            return sprite:getRectangle()
+
+        else
+            return utils.rectangle(node.x, node.y, entity.width, entity.height)
+        end
+    end,
+
+    drawSelected = function(room, layer, entity, color)
+        if not entity.nodes or #entity.nodes < 2 then
+            return
+        end
+
+        local iconNode = entity.nodes[1]
+        local targetNode = entity.nodes[2]
+
+        drawing.callKeepOriginalColor(function()
+            love.graphics.setColor(color)
+
+            local x1, y1 = entity.x + (entity.width / 2), entity.y + (entity.height / 2)
+            local x2, y2 = targetNode.x + (entity.width / 2), targetNode.y + (entity.height / 2)
+
+            love.graphics.line(x1, y1, x2, y2)
+
+            if iconNode.x >= entity.x and iconNode.x <= entity.x + entity.width and iconNode.y >= entity.y and iconNode.y <= entity.y + entity.height then
+                return
+            end
+
+            love.graphics.line(x1, y1, iconNode.x, iconNode.y)
+        end)
+
+        local rectangle = utils.rectangle(targetNode.x, targetNode.y, entity.width, entity.height)
+        local rectangleSprites = drawableRectangle.fromRectangle("bordered", rectangle, containerFill, containerBorder):getDrawableSprite()
+
+        if utils.typeof(rectangleSprites) == "table" then
+            for _, sprite in ipairs(rectangleSprites) do
+                sprite:draw()
+            end
+
+        else
+            rectangleSprites:draw()
+        end
+
+        if not entity.iconVisible then
+            local iconSprite = drawableSprite.fromTexture(entity.icon .. "00", entity)
+
+            iconSprite.depth = depths.top
+            iconSprite:setPosition(entity.nodes[1].x, entity.nodes[1].y)
+            iconSprite:setJustification(0.5, 0.5)
+            iconSprite:setAlpha(0.5)
+
+            iconSprite:draw()
+        end
+    end
 }
 
 local flagToggleModifier = {
     name = "EeveeHelper/FlagToggleModifier",
-    fillColor = { 0.6, 1.0, 0.6, 0.4 },
-    borderColor = { 0.6, 1.0, 0.6, 1 },
+    fillColor = modifierFill,
+    borderColor = modifierBorder,
 
     placements = {
         name = "default",
@@ -277,8 +384,8 @@ local flagToggleModifier = {
 
 local collidableModifier = {
     name = "EeveeHelper/CollidableModifier",
-    fillColor = { 0.6, 1.0, 0.6, 0.4 },
-    borderColor = { 0.6, 1.0, 0.6, 1 },
+    fillColor = modifierFill,
+    borderColor = modifierBorder,
 
     placements = {
         default = {
@@ -331,8 +438,8 @@ local collidableModifier = {
 
 local depthModifier = {
     name = "EeveeHelper/DepthModifier",
-    fillColor = { 0.6, 1.0, 0.6, 0.4 },
-    borderColor = { 0.6, 1.0, 0.6, 1 },
+    fillColor = modifierFill,
+    borderColor = modifierBorder,
 
     placements = {
         name = "default",
@@ -352,8 +459,8 @@ local depthModifier = {
 
 local globalModifier = {
     name = "EeveeHelper/GlobalModifier",
-    fillColor = { 0.6, 1.0, 0.6, 0.4 },
-    borderColor = { 0.6, 1.0, 0.6, 1 },
+    fillColor = modifierFill,
+    borderColor = modifierBorder,
 
     placements = {
         name = "default",

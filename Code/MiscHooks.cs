@@ -30,6 +30,10 @@ public static class MiscHooks
 		IL.Celeste.Holdable.Release += Holdable_Release;
 		IL.Celeste.MapData.ParseBackdrop += MapData_ParseBackdrop;
 		IL.Monocle.EntityList.UpdateLists += EntityList_UpdateLists;
+		On.Celeste.Player.Update += Player_Update;
+		On.Celeste.Player.ClimbBegin += Player_ClimbBegin;
+		On.Celeste.Player.ClimbUpdate += Player_ClimbUpdate;
+		On.Celeste.Player.IsRiding_Solid += Player_IsRiding_Solid;
 
 		IL.Celeste.Solid.MoveHExact += Solid_MoveHExact;
 		IL.Celeste.Solid.MoveVExact += Solid_MoveVExact;
@@ -51,6 +55,10 @@ public static class MiscHooks
 		IL.Celeste.Holdable.Release -= Holdable_Release;
 		IL.Celeste.MapData.ParseBackdrop -= MapData_ParseBackdrop;
 		IL.Monocle.EntityList.UpdateLists -= EntityList_UpdateLists;
+		On.Celeste.Player.Update -= Player_Update;
+		On.Celeste.Player.ClimbBegin -= Player_ClimbBegin;
+		On.Celeste.Player.ClimbUpdate -= Player_ClimbUpdate;
+		On.Celeste.Player.IsRiding_Solid -= Player_IsRiding_Solid;
 
 		IL.Celeste.Solid.MoveHExact -= Solid_MoveHExact;
 		IL.Celeste.Solid.MoveVExact -= Solid_MoveVExact;
@@ -581,5 +589,158 @@ public static class MiscHooks
 			return;
 		}
 		orig(self, amount);
+	}
+
+	private static void Player_Update(On.Celeste.Player.orig_Update orig, Player self)
+	{
+		orig(self);
+
+		if (self.StateMachine.State == Player.StClimb && self.Speed.Y >= 0f && TryGetCeilingPopLeniency(self, out var leniency))
+		{
+			var data = DynamicData.For(self);
+
+			if (data.TryGet<float>("EeveeHelper_cPopDelay", out var cPopDelay) && cPopDelay > 0)
+			{
+				return;
+			}
+
+			if (!self.CollideCheck<Solid>(self.Position + Vector2.UnitX * (float)self.Facing))
+			{
+				data.Set("EeveeHelper_cPopDelay", leniency);
+
+				for (var i = 1; i <= 2; i++)
+				{
+					if (self.CollideCheck<Solid>(self.Position + new Vector2((float)self.Facing, -i)))
+					{
+						self.MoveVExact(-i + 1);
+						break;
+					}
+				}
+
+				self.Speed = Vector2.Zero;
+			}
+			else if (!self.CollideCheck<Solid>(self.Position + new Vector2((float)self.Facing, 1f)))
+			{
+				self.movementCounter.Y = 0.49f;
+			}
+		}
+	}
+
+	private static void Player_ClimbBegin(On.Celeste.Player.orig_ClimbBegin orig, Player self)
+	{
+		orig(self);
+
+		DynamicData.For(self).Set("EeveeHelper_cPopDelay", 0f);
+	}
+
+	private static int Player_ClimbUpdate(On.Celeste.Player.orig_ClimbUpdate orig, Player self)
+	{
+		var data = DynamicData.For(self);
+
+		if (!data.TryGet<float>("EeveeHelper_cPopDelay", out var cPopDelay) || cPopDelay <= 0f)
+		{
+			return orig(self);
+		}
+
+		cPopDelay -= Engine.DeltaTime;
+
+		data.Set("EeveeHelper_cPopDelay", 0f);
+
+		self.movementCounter.X = self.Facing == Facings.Right ? 0.49f : -0.49f;
+		self.movementCounter.Y = 0.49f;
+
+		if (Input.Jump.Pressed && (!self.Ducking || self.CanUnDuck))
+		{
+			if (self.moveX == -(int)self.Facing)
+			{
+				self.WallJump(-(int)self.Facing);
+			}
+			else
+			{
+				self.ClimbJump();
+			}
+
+			return Player.StNormal;
+		}
+
+		if (self.CanDash)
+		{
+			self.Speed += self.LiftBoost;
+
+			return self.StartDash();
+		}
+
+		if (!Input.GrabCheck)
+		{
+			self.Speed += self.LiftBoost;
+			self.Play("event:/char/madeline/grab_letgo", null, 0f);
+
+			return Player.StNormal;
+		}
+
+		if (cPopDelay <= 0f)
+		{
+			self.StateMachine.State = Player.StNormal;
+
+			// Instant regrabbing (for following moving solids)
+			if (Input.GrabCheck && !self.IsTired && !self.Ducking && !SaveData.Instance.Assists.NoGrabbing && Input.MoveY < 1f && self.level.Wind.Y <= 0f)
+			{
+				for (var i = 1; i <= 2; i++)
+				{
+					if (!self.CollideCheck<Solid>(self.Position + Vector2.UnitY * -i) && self.ClimbCheck((int)self.Facing, -i))
+					{
+						self.MoveVExact(-i);
+
+						self.StateMachine.State = Player.StClimb;
+
+						return Player.StClimb;
+					}
+				}
+			}
+
+			return Player.StNormal;
+		}
+
+		data.Set("EeveeHelper_cPopDelay", cPopDelay);
+
+		return Player.StClimb;
+	}
+
+	private static bool Player_IsRiding_Solid(On.Celeste.Player.orig_IsRiding_Solid orig, Player self, Solid solid)
+	{
+		if (self.StateMachine.State == Player.StClimb)
+		{
+			var data = DynamicData.For(self);
+
+			if (data.TryGet<float>("EeveeHelper_cPopDelay", out var cPopDelay) && cPopDelay > 0f)
+			{
+				return self.CollideCheck(solid, self.Position + new Vector2((float)self.Facing, -1f));
+			}
+		}
+
+		return orig(self, solid);
+	}
+
+	private static bool TryGetCeilingPopLeniency(Player player, out float leniency)
+	{
+		foreach (LenientCeilingPopTrigger trigger in player.Scene.Tracker.GetEntities<LenientCeilingPopTrigger>())
+		{
+			if (trigger.PlayerIsInside)
+			{
+				leniency = trigger.LeniencyFrames / 60f;
+				return true;
+			}
+		}
+
+		var controller = player.Scene.Tracker.GetEntity<LenientCeilingPopController>();
+
+		if (controller != null)
+		{
+			leniency = controller.LeniencyFrames / 60f;
+			return true;
+		}
+
+		leniency = 0f;
+		return false;
 	}
 }

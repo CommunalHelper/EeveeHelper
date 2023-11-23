@@ -247,3 +247,11 @@ entities.EeveeHelper/CoreZoneStartController.attributes.description.zoneId=The z
 entities.EeveeHelper/CoreZoneStartController.attributes.description.coreMode=The core mode the specified zone group should be set to on room start.
 entities.EeveeHelper/CoreZoneStartController.attributes.description.startOnly=Whether the core mode is only set for the zone group if it hasn't been set before.
 entities.EeveeHelper/CoreZoneStartController.attributes.description.persistent=Whether the core mode persists after death instead of resetting to initial room entry state.
+
+# Lenient Ceiling Pop Controller
+entities.EeveeHelper/LenientCeilingPopController.placements.name.default=Lenient Ceiling Pop Controller
+entities.EeveeHelper/LenientCeilingPopController.attributes.description.leniencyFrames=The number of frames the player should "freeze" below the block to allow more time to input a ceiling pop.
+
+# Lenient Ceiling Pop Trigger
+triggers.EeveeHelper/LenientCeilingPopTrigger.placements.name.default=Lenient Ceiling Pop Trigger
+triggers.EeveeHelper/LenientCeilingPopTrigger.attributes.description.leniencyFrames=The number of frames the player should "freeze" below the block to allow more time to input a ceiling pop.

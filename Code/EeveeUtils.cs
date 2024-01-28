@@ -64,6 +64,21 @@ public static class EeveeUtils
 		return GetValueOfType(dict, type.BaseType);
 	}
 
+	public static int? OptionalInt(EntityData data, string key, int? defaultValue = null)
+	{
+		if (!data.Has(key))
+		{
+			return defaultValue;
+		}
+
+		if (int.TryParse(data.Attr(key), out var result))
+		{
+			return result;
+		}
+
+		return null;
+	}
+
 	public static float? OptionalFloat(EntityData data, string key, float? defaultValue = null)
 	{
 		if (!data.Has(key))

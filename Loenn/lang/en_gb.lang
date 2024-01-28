@@ -223,6 +223,10 @@ entities.EeveeHelper/RoomChestExit.attributes.description.visible=Whether the ex
 # Patient Booster
 entities.EeveeHelper/PatientBooster.placements.name.default=Patient Booster
 entities.EeveeHelper/PatientBooster.placements.name.red=Patient Booster (Red)
+entities.EeveeHelper/PatientBooster.attributes.description.respawnDelay=The time it takes for the booster to respawn (in seconds).
+entities.EeveeHelper/PatientBooster.attributes.description.refillDashes=(Optional) The amount of dashes the booster should refill the player up to, if specified.
+entities.EeveeHelper/PatientBooster.attributes.description.refillStamina=Whether the booster refills stamina when entered.
+entities.EeveeHelper/PatientBooster.attributes.description.sprite=(Optional) The XML sprite to use for the booster (not reflected in editor).
 
 # Core Zone
 entities.EeveeHelper/CoreZone.placements.name.current=Core Zone (Current)

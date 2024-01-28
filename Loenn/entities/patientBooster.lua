@@ -4,6 +4,15 @@ local patientBooster = {
     name = "EeveeHelper/PatientBooster",
     depth = -8500,
     placements = {
+        default = {
+            data = {
+                red = false,
+                sprite = "",
+                respawnDelay = 1.0,
+                refillDashes = "",
+                refillStamina = true,
+            }
+        },
         {
             name = "default",
             data = {

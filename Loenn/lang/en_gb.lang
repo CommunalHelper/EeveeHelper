@@ -259,3 +259,9 @@ entities.EeveeHelper/LenientCeilingPopController.attributes.description.leniency
 # Lenient Ceiling Pop Trigger
 triggers.EeveeHelper/LenientCeilingPopTrigger.placements.name.default=Lenient Ceiling Pop Trigger
 triggers.EeveeHelper/LenientCeilingPopTrigger.attributes.description.leniencyFrames=The number of frames the player should "freeze" below the block to allow more time to input a ceiling pop.
+
+# No Demo Bind Controller
+entities.EeveeHelper/NoDemoBindController.placements.name.default=No Demo Bind Controller
+
+# No Demo Bind Trigger
+triggers.EeveeHelper/NoDemoBindTrigger.placements.name.default=No Demo Bind Trigger

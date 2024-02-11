@@ -37,6 +37,7 @@ public static class MiscHooks
 		On.Celeste.Player.ClimbBegin += Player_ClimbBegin;
 		On.Celeste.Player.ClimbUpdate += Player_ClimbUpdate;
 		On.Celeste.Player.IsRiding_Solid += Player_IsRiding_Solid;
+		On.Celeste.Level.LoadLevel += Level_LoadLevel;
 
 		IL.Celeste.Solid.MoveHExact += Solid_MoveHExact;
 		IL.Celeste.Solid.MoveVExact += Solid_MoveVExact;
@@ -65,6 +66,7 @@ public static class MiscHooks
 		On.Celeste.Player.ClimbBegin -= Player_ClimbBegin;
 		On.Celeste.Player.ClimbUpdate -= Player_ClimbUpdate;
 		On.Celeste.Player.IsRiding_Solid -= Player_IsRiding_Solid;
+		On.Celeste.Level.LoadLevel -= Level_LoadLevel;
 
 		IL.Celeste.Solid.MoveHExact -= Solid_MoveHExact;
 		IL.Celeste.Solid.MoveVExact -= Solid_MoveVExact;
@@ -752,24 +754,18 @@ public static class MiscHooks
 		return false;
 	}
 
+	private static void Level_LoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level self, Player.IntroTypes playerIntro, bool isFromLoader)
+	{
+		orig(self, playerIntro, isFromLoader);
+
+		NoDemoBindController.UpdateTriggered();
+	}
+
 	private static bool Input_get_CrouchDashPressed(orig_Input_get_CrouchDashPressed orig)
 	{
-		if (Engine.Scene is not Level level)
-		{
-			return orig();
-		}
-
-		if (level.Tracker.GetEntity<NoDemoBindController>() != null)
+		if (NoDemoBindController.Triggered)
 		{
 			return false;
-		}
-
-		foreach (NoDemoBindTrigger trigger in level.Tracker.GetEntities<NoDemoBindTrigger>())
-		{
-			if (trigger.PlayerIsInside)
-			{
-				return false;
-			}
 		}
 
 		return orig();

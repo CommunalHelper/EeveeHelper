@@ -18,6 +18,9 @@ namespace Celeste.Mod.EeveeHelper;
 
 public static class MiscHooks
 {
+	private delegate bool orig_Input_get_CrouchDashPressed();
+
+	private static Hook inputGetCrouchDashPressedHook;
 	private static ILHook levelLoadHook;
 	private static ILHook zipMoverSequenceHook;
 
@@ -42,6 +45,9 @@ public static class MiscHooks
 
 		IL.Celeste.SwapBlock.Update += SwapBlock_Update;
 
+		inputGetCrouchDashPressedHook = new Hook(typeof(Input).GetProperty("CrouchDashPressed", BindingFlags.Public | BindingFlags.Static).GetMethod, Input_get_CrouchDashPressed);
+		inputGetCrouchDashPressedHook.Apply();
+
 		levelLoadHook = new ILHook(typeof(Level).GetMethod("orig_LoadLevel", BindingFlags.Public | BindingFlags.Instance), Level_orig_LoadLevel);
 		zipMoverSequenceHook = new ILHook(typeof(ZipMover).GetMethod("Sequence", BindingFlags.Instance | BindingFlags.NonPublic).GetStateMachineTarget(), ZipMover_Sequence);
 	}
@@ -65,6 +71,8 @@ public static class MiscHooks
 
 		IL.Celeste.SwapBlock.Update -= SwapBlock_Update;
 		On.Celeste.StaticMover.Move -= StaticMover_Move;
+
+		inputGetCrouchDashPressedHook?.Dispose();
 
 		levelLoadHook?.Dispose();
 		zipMoverSequenceHook?.Dispose();
@@ -742,5 +750,28 @@ public static class MiscHooks
 
 		leniency = 0f;
 		return false;
+	}
+
+	private static bool Input_get_CrouchDashPressed(orig_Input_get_CrouchDashPressed orig)
+	{
+		if (Engine.Scene is not Level level)
+		{
+			return orig();
+		}
+
+		if (level.Tracker.GetEntity<NoDemoBindController>() != null)
+		{
+			return false;
+		}
+
+		foreach (NoDemoBindTrigger trigger in level.Tracker.GetEntities<NoDemoBindTrigger>())
+		{
+			if (trigger.PlayerIsInside)
+			{
+				return false;
+			}
+		}
+
+		return orig();
 	}
 }

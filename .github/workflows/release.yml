@@ -43,6 +43,7 @@ jobs:
         path: |
           Ahorn
           Code/bin
+          Dialog
           Graphics
           Loenn
           everest.yaml

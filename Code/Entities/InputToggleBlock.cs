@@ -104,10 +104,10 @@ public class InputToggleBlock : Solid
 			object[] inputs = null;
 			switch (type)
 			{
-				case Types.Grab:   inputs = [ Input.Grab ]; break;
-				case Types.Jump:   inputs = [ Input.Jump ]; break;
-				case Types.Dash:   inputs = [ Input.Dash ]; break;
-				case Types.Custom: inputs = [ EeveeHelperModule.Settings.ActivateCustomInputBlock.Button, "(Rebindable)" ]; break;
+				case Types.Grab:   inputs = new object[] { Input.Grab }; break;
+				case Types.Jump:   inputs = new object[] { Input.Jump }; break;
+				case Types.Dash:   inputs = new object[] { Input.Dash }; break;
+				case Types.Custom: inputs = new object[] { EeveeHelperModule.Settings.ActivateCustomInputBlock.Button, "(Rebindable)" }; break;
 			}
 
 			gui = new BirdTutorialGui(this, new Vector2(Width / 2f, 0), Dialog.Clean($"EeveeHelper_InputToggleBlock_{typeName}"), inputs);

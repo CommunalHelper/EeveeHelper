@@ -191,3 +191,10 @@ placements.entities.EeveeHelper/CoreZoneStartController.tooltips.zoneId=The zone
 placements.entities.EeveeHelper/CoreZoneStartController.tooltips.coreMode=The core mode the specified zone group should be set to on room start.
 placements.entities.EeveeHelper/CoreZoneStartController.tooltips.startOnly=Whether the core mode is only set for the zone group if it hasn't been set before.
 placements.entities.EeveeHelper/CoreZoneStartController.tooltips.persistent=Whether the core mode persists after death instead of resetting to initial room entry state.
+
+# Input Toggle Block
+placements.entities.EeveeHelper/InputToggleBlock.tooltips.texture=Folder of textures to use, relative to Gameplay/objects.
+placements.entities.EeveeHelper/InputToggleBlock.tooltips.time=Time in seconds it takes the block to move between nodes.
+placements.entities.EeveeHelper/InputToggleBlock.tooltips.tutorialFlag=If this flag is enabled, the block will display a tutorial indicating what button to press to activate it.
+placements.entities.EeveeHelper/InputToggleBlock.tooltips.type=Type of button that activates the block. "Custom" is rebindable in the player's mod settings.
+placements.entities.EeveeHelper/InputToggleBlock.tooltips.cancellable=Whether pressing the button while the block is already moving interrupts it and sends it back.

@@ -1,0 +1,4 @@
+EeveeHelper_InputToggleBlock_grab=GRAB
+EeveeHelper_InputToggleBlock_jump=JUMP
+EeveeHelper_InputToggleBlock_dash=DASH
+EeveeHelper_InputToggleBlock_custom=ACTIVATE

@@ -21,6 +21,9 @@ public class EeveeHelperModule : EverestModule
 	public override Type SessionType => typeof(EeveeHelperSession);
 	public static EeveeHelperSession Session => (EeveeHelperSession)Instance._Session;
 
+	public override Type SettingsType => typeof(EeveeHelperSettings);
+	public static EeveeHelperSettings Settings => (EeveeHelperSettings)Instance._Settings;
+
 	public static bool AdventureHelperLoaded { get; set; }
 	public static bool StyleMaskHelperLoaded { get; set; }
 	public static bool SpeedrunToolLoaded { get; set; }

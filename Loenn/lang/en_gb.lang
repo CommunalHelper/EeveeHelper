@@ -265,3 +265,14 @@ entities.EeveeHelper/NoDemoBindController.placements.name.default=No Demo Bind C
 
 # No Demo Bind Trigger
 triggers.EeveeHelper/NoDemoBindTrigger.placements.name.default=No Demo Bind Trigger
+
+# Input Toggle Block
+entities.EeveeHelper/InputToggleBlock.placements.name.grab=Input Toggle Block (Grab)
+entities.EeveeHelper/InputToggleBlock.placements.name.jump=Input Toggle Block (Jump)
+entities.EeveeHelper/InputToggleBlock.placements.name.dash=Input Toggle Block (Dash)
+entities.EeveeHelper/InputToggleBlock.placements.name.custom=Input Toggle Block (Custom)
+entities.EeveeHelper/InputToggleBlock.attributes.description.texture=Folder of textures to use, relative to Gameplay/objects.
+entities.EeveeHelper/InputToggleBlock.attributes.description.time=Time in seconds it takes the block to move between nodes.
+entities.EeveeHelper/InputToggleBlock.attributes.description.tutorialFlag=If this flag is enabled, the block will display a tutorial indicating what button to press to activate it.
+entities.EeveeHelper/InputToggleBlock.attributes.description.type=Type of button that activates the block. "Custom" is rebindable in the player's mod settings.
+entities.EeveeHelper/InputToggleBlock.attributes.description.cancellable=Whether pressing the button while the block is already moving interrupts it and sends it back.

@@ -9,6 +9,8 @@ namespace Celeste.Mod.EeveeHelper.Entities;
 [CustomEntity("EeveeHelper/SMWPlatform")]
 public class SMWPlatform : JumpThru
 {
+	private bool WaitForStart => !legacyFlagStopBehaviour || startOnTouch;
+
 	private string texturePath;
 	private string flag;
 	private bool notFlag;
@@ -18,6 +20,7 @@ public class SMWPlatform : JumpThru
 	private bool once;
 	private bool disableBoost;
 	private float startDelay;
+	private bool legacyFlagStopBehaviour;
 
 	public SMWTrackMover Mover;
 
@@ -44,6 +47,7 @@ public class SMWPlatform : JumpThru
 		once = data.Bool("moveOnce");
 		disableBoost = data.Bool("disableBoost");
 		startDelay = data.Float("startDelay");
+		legacyFlagStopBehaviour = data.Bool("legacyFlagStopBehaviour", true);
 
 		Add(Mover = new SMWTrackMover(data)
 		{
@@ -59,7 +63,7 @@ public class SMWPlatform : JumpThru
 
 			OnStop = (mover, end) =>
 			{
-				if (startOnTouch)
+				if (WaitForStart)
 				{
 					started = false;
 				}
@@ -71,7 +75,7 @@ public class SMWPlatform : JumpThru
 			}
 		});
 
-		if (startOnTouch)
+		if (WaitForStart)
 		{
 			started = false;
 			Mover.Activated = false;
@@ -174,11 +178,31 @@ public class SMWPlatform : JumpThru
 			waitingForRestart = false;
 		}
 
-		if (!started && startOnTouch && !waitingForRestart)
+		var newStarted = false;
+
+		if (!started && WaitForStart && !waitingForRestart)
 		{
-			started = HasPlayerRider();
+			if (startOnTouch)
+			{
+				newStarted = HasPlayerRider();
+			}
+			else
+			{
+				newStarted = true;
+			}
 		}
 
-		return started && flagActive;
+		if ((!stopAtEnd && !stopAtNode) || legacyFlagStopBehaviour)
+		{
+			started = started || newStarted;
+
+			return started && flagActive;
+		}
+		else
+		{
+			started = started || (newStarted & flagActive);
+
+			return started;
+		}
 	}
 }

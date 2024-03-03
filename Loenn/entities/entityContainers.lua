@@ -162,6 +162,7 @@ local SMWTrackContainer = {
                 stopAtEnd = false,
                 moveOnce = false,
                 disableBoost = false,
+                legacyFlagStopBehaviour = false,
             }
         },
         {

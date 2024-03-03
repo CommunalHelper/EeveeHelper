@@ -138,6 +138,7 @@ entities.EeveeHelper/SMWTrackContainer.attributes.description.stopAtNode=Whether
 entities.EeveeHelper/SMWTrackContainer.attributes.description.stopAtEnd=Whether the container should stop moving when it reaches the end of the track. (Always enabled if Stop At Node is enabled)
 entities.EeveeHelper/SMWTrackContainer.attributes.description.moveOnce=Whether the container can be re-activated after reaching the end of the track. (Only if Stop At Node/End is enabled)
 entities.EeveeHelper/SMWTrackContainer.attributes.description.startDelay=The delay before the container starts moving when activated. Only applies if the container needs to be started with a touch/flag.
+entities.EeveeHelper/SMWTrackContainer.attributes.description.legacyFlagStopBehaviour=(Legacy behaviour) If enabled, Stop At Node/End have no effect unless Start On Touch is enabled, in which case flag toggling will immediately pause/resume track movement.
 
 # Flag Gate Container
 entities.EeveeHelper/FlagGateContainer.attributes.description.fitContained=Whether the container's box is resized if entities inside it move.
@@ -210,6 +211,7 @@ entities.EeveeHelper/SMWPlatform.attributes.description.stopAtNode=Whether the p
 entities.EeveeHelper/SMWPlatform.attributes.description.stopAtEnd=Whether the platform should stop moving when it reaches the end of the track. (Always enabled if Stop At Node is enabled)
 entities.EeveeHelper/SMWPlatform.attributes.description.moveOnce=Whether the platform can be re-activated after reaching the end of the track. (Only if Stop At Node/End is enabled)
 entities.EeveeHelper/SMWPlatform.attributes.description.startDelay=The delay before the platform starts moving when activated. Only applies if the platform needs to be started with a touch/flag.
+entities.EeveeHelper/SMWPlatform.attributes.description.legacyFlagStopBehaviour=(Legacy behaviour) If enabled, Stop At Node/End have no effect unless Start On Touch is enabled, in which case flag toggling will immediately pause/resume track movement.
 
 # Room Chest
 entities.EeveeHelper/RoomChest.placements.name.default=Room Chest

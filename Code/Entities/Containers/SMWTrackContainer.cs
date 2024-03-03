@@ -11,6 +11,8 @@ public class SMWTrackContainer : Entity, IContainer
 {
 	public EntityContainer Container => _Container;
 
+	private bool WaitForStart => !legacyFlagStopBehaviour || startOnTouch;
+
 	private string moveFlag;
 	private bool notFlag;
 	private bool startOnTouch;
@@ -19,6 +21,7 @@ public class SMWTrackContainer : Entity, IContainer
 	private bool once;
 	private bool disableBoost;
 	private float startDelay;
+	private bool legacyFlagStopBehaviour;
 
 	public EntityContainerMover _Container;
 	public SMWTrackMover Mover;
@@ -50,6 +53,7 @@ public class SMWTrackContainer : Entity, IContainer
 		stopAtEnd = data.Bool("stopAtEnd");
 		once = data.Bool("moveOnce");
 		startDelay = data.Float("startDelay");
+		legacyFlagStopBehaviour = data.Bool("legacyFlagStopBehaviour", true);
 
 		Add(_Container = new EntityContainerMover(data)
 		{
@@ -66,19 +70,19 @@ public class SMWTrackContainer : Entity, IContainer
 
 			OnStop = (mover, end) =>
 			{
-				if (startOnTouch)
+				if (WaitForStart)
 				{
 					started = false;
 				}
-				waitingForRestart = true;
 				if (end)
 				{
 					movedOnce = true;
 				}
+				waitingForRestart = true;
 			}
 		});
 
-		if (startOnTouch)
+		if (WaitForStart)
 		{
 			started = false;
 			Mover.Activated = false;
@@ -135,12 +139,32 @@ public class SMWTrackContainer : Entity, IContainer
 			waitingForRestart = false;
 		}
 
-		if (!started && startOnTouch && !waitingForRestart)
+		var newStarted = false;
+
+		if (!started && WaitForStart && !waitingForRestart)
 		{
-			started = PlayerCheck();
+			if (startOnTouch)
+			{
+				newStarted = PlayerCheck();
+			}
+			else
+			{
+				newStarted = true;
+			}
 		}
 
-		return started && flagActive;
+		if ((!stopAtEnd && !stopAtNode) || legacyFlagStopBehaviour)
+		{
+			started = started || newStarted;
+
+			return started && flagActive;
+		}
+		else
+		{
+			started = started || (newStarted & flagActive);
+
+			return started;
+		}
 	}
 
 	private bool PlayerCheck()

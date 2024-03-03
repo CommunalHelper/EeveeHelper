@@ -29,6 +29,7 @@ local smwPlatform = {
                 stopAtEnd = false,
                 moveOnce = false,
                 disableBoost = false,
+                legacyFlagStopBehaviour = false,
             }
         },
         {

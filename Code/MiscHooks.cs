@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.EeveeHelper;
 
@@ -26,7 +27,7 @@ public static class MiscHooks
 
 	public static void Load()
 	{
-		On.Monocle.Collide.Check_Entity_Entity += Collide_Check_Entity_Entity;
+		IL.Monocle.Collide.Check_Entity_Entity += Collide_Check_Entity_Entity;
 		On.Celeste.Actor.MoveHExact += Actor_MoveHExact;
 		On.Celeste.Actor.MoveVExact += Actor_MoveVExact;
 		On.Celeste.Actor.OnGround_int += Actor_OnGround_int;
@@ -55,7 +56,7 @@ public static class MiscHooks
 
 	public static void Unload()
 	{
-		On.Monocle.Collide.Check_Entity_Entity -= Collide_Check_Entity_Entity;
+		IL.Monocle.Collide.Check_Entity_Entity -= Collide_Check_Entity_Entity;
 		On.Celeste.Actor.MoveHExact -= Actor_MoveHExact;
 		On.Celeste.Actor.MoveVExact -= Actor_MoveVExact;
 		On.Celeste.Actor.OnGround_int -= Actor_OnGround_int;
@@ -294,40 +295,42 @@ public static class MiscHooks
 		Logger.Log("EeveeHelper", $"Added IL Hook for Level.orig_LoadLevel ({type} - 3)");
 	}
 
-	//Small optimization here where if it isn't an EntityContainingSet or has an EntityContainer it doesn't worry about the messy code. This needs to be improved a ton already but whatever.
-	private static bool Collide_Check_Entity_Entity(On.Monocle.Collide.orig_Check_Entity_Entity orig, Entity a, Entity b)
+	private static void Collide_Check_Entity_Entity(ILContext il)
 	{
-		if (a == null || b == null || (a is CollidableModifier.Solidifier aSolid && aSolid.Entity == b) ||
-			(b is CollidableModifier.Solidifier bSolid && bSolid.Entity == a))
+		ILCursor cursor = new ILCursor(il);
+		ILLabel label = null;
+		if(cursor.TryGotoNext(MoveType.After, i => i.MatchBeq(out label)))
 		{
-			return false;
+			cursor.Emit(OpCodes.Ldarg_0);
+			cursor.Emit(OpCodes.Ldarg_1);
+			cursor.Emit(OpCodes.Call, typeof(MiscHooks).GetMethod(nameof(CheckContainers), BindingFlags.NonPublic | BindingFlags.Static));
+			cursor.Emit(OpCodes.Brtrue, label);
 		}
-		EntityContainer aContainer = null;
-		EntityContainer bContainer = null;
-		if (a is IContainer iA) { aContainer = iA.Container; }
-		if (b is IContainer iB) { bContainer = iB.Container; }
-		if (aContainer == null && bContainer == null) { return orig(a, b); }
-		if ((aContainer != null && !aContainer.CollideWithContained && aContainer.GetEntities().Contains(b)) ||
-			(bContainer != null && !bContainer.CollideWithContained && bContainer.GetEntities().Contains(a)))
-		{
-			return false;
-		}
-		return orig(a, b);
 	}
+	// If this statement is *true*, Collide Check returns *false*
+	private static bool CheckContainers(Entity a, Entity b) =>
+		(a is IContainer iA && iA.Container is { } aContainer && aContainer != null && !aContainer.CollideWithContained && aContainer.GetEntities().Contains(b)) ||
+		(b is IContainer iB && iB.Container is { } bContainer && bContainer != null && !bContainer.CollideWithContained && bContainer.GetEntities().Contains(a)) ||
+		(a is CollidableModifier.Solidifier aSolid && aSolid.Entity == b) ||
+		(b is CollidableModifier.Solidifier bSolid && bSolid.Entity == a); 
+
+	// Update: Prevents new DynamicData being created for every entity, since we don't want a DynamicData object created here we only want to see if one exists.
+	private static FieldInfo DynamicData__DynamicDataMap = typeof(DynamicData).GetField("_DynamicDataMap", BindingFlags.Static | BindingFlags.NonPublic);
 
 	private static bool Actor_MoveHExact(On.Celeste.Actor.orig_MoveHExact orig, Actor self, int moveH, Collision onCollide, Solid pusher)
 	{
-		var selfData = new DynamicData(typeof(Entity), self);
-		var result = true;
+		CollidableModifier.Solidifier solidified = null;
+		bool SolidifierExists = ((ConditionalWeakTable<object, DynamicData>)DynamicData__DynamicDataMap.GetValue(null)).TryGetValue(self, out var selfData) &&
+			selfData.TryGet("solidModifierSolidifier", out solidified);
 
-		var solidified = selfData.Get<CollidableModifier.Solidifier>("solidModifierSolidifier");
-		var solidifierCollidable = solidified?.Collidable ?? true;
-
-		if (solidified != null)
+		var solidifierCollidable = true;
+		if (SolidifierExists)
 		{
+			solidifierCollidable = solidified.Collidable;
 			solidified.Collidable = false;
 		}
 
+		var result = true;
 		if (self is HoldableContainer container)
 		{
 			var collidable = self.Collidable;
@@ -338,11 +341,13 @@ public static class MiscHooks
 		{
 			result = orig(self, moveH, onCollide, pusher);
 		}
-
-		if (solidified != null)
+		if (SolidifierExists)
 		{
-			solidified.Collidable = solidifierCollidable;
-			solidified.MoveTo(self.ExactPosition);
+			if (solidified != null)
+			{
+				solidified.Collidable = solidifierCollidable;
+				solidified.MoveTo(self.ExactPosition);
+			}
 		}
 
 		return result;
@@ -350,17 +355,18 @@ public static class MiscHooks
 
 	private static bool Actor_MoveVExact(On.Celeste.Actor.orig_MoveVExact orig, Actor self, int moveV, Collision onCollide, Solid pusher)
 	{
-		var selfData = new DynamicData(typeof(Entity), self);
-		var result = true;
+		CollidableModifier.Solidifier solidified = null;
+		bool SolidifierExists = ((ConditionalWeakTable<object, DynamicData>)DynamicData__DynamicDataMap.GetValue(null)).TryGetValue(self, out var selfData) &&
+			selfData.TryGet<CollidableModifier.Solidifier>("solidModifierSolidifier", out solidified);
 
-		var solidified = selfData.Get<CollidableModifier.Solidifier>("solidModifierSolidifier");
-		var solidifierCollidable = solidified?.Collidable ?? true;
-
-		if (solidified != null)
+		var solidifierCollidable = true;
+		if (SolidifierExists)
 		{
+			solidifierCollidable = solidified.Collidable;
 			solidified.Collidable = false;
 		}
 
+		var result = true;
 		if (self is HoldableContainer container)
 		{
 			var collidable = self.Collidable;
@@ -372,7 +378,7 @@ public static class MiscHooks
 			result = orig(self, moveV, onCollide, pusher);
 		}
 
-		if (solidified != null)
+		if (SolidifierExists)
 		{
 			solidified.Collidable = solidifierCollidable;
 			var collidable = self.Collidable;
@@ -389,17 +395,18 @@ public static class MiscHooks
 
 	private static bool Actor_OnGround_int(On.Celeste.Actor.orig_OnGround_int orig, Actor self, int downCheck)
 	{
-		var selfData = DynamicData.For(self);
-		var result = true;
+		CollidableModifier.Solidifier solidified = null;
+		bool SolidifierExists = ((ConditionalWeakTable<object, DynamicData>)DynamicData__DynamicDataMap.GetValue(null)).TryGetValue(self, out var selfData) &&
+			selfData.TryGet<CollidableModifier.Solidifier>("solidModifierSolidifier", out solidified);
 
-		var solidified = selfData.Get<CollidableModifier.Solidifier>("solidModifierSolidifier");
-		var solidifierCollidable = solidified?.Collidable ?? true;
-
-		if (solidified != null)
+		var solidifierCollidable = true;
+		if (SolidifierExists)
 		{
+			solidifierCollidable = solidified.Collidable;
 			solidified.Collidable = false;
 		}
 
+		var result = true;
 		if (self is HoldableContainer container)
 		{
 			container._Container.DoIgnoreCollision(() => result = orig(self, downCheck));
@@ -409,7 +416,7 @@ public static class MiscHooks
 			result = orig(self, downCheck);
 		}
 
-		if (solidified != null)
+		if (SolidifierExists)
 		{
 			solidified.Collidable = solidifierCollidable;
 		}

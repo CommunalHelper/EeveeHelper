@@ -164,12 +164,12 @@ public class CollidableModifier : Entity, IContainer
 				return;
 			}
 
-			Depth = Entity.Depth + 1;
-
-			if (Entity.Collider.Size != Collider.Size)
+			if(Collider.Size != Entity.Collider.Size)
 			{
 				Collider = Entity.Collider.Clone();
 			}
+
+			Depth = Entity.Depth + 1;
 
 			if (ExactPosition != EeveeUtils.GetPosition(Entity))
 			{

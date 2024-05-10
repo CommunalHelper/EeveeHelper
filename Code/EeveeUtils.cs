@@ -42,7 +42,7 @@ public static class EeveeUtils
 			Width = data.Width,
 			Height = data.Height,
 			Origin = data.Origin,
-			Nodes = (Vector2[])data.Nodes.Clone(),
+			Nodes = data.NodesOffset(data.Level.Position - level.Position),
 			Values = data.Values == null ? new Dictionary<string, object>() : new Dictionary<string, object>(data.Values)
 		};
 	}

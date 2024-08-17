@@ -93,7 +93,7 @@ public class RoomChestExit : Entity
 						}
 
 						var lastChest = RoomChest.LastChests.Pop();
-						player.Position = lastChest.BottomCenter - Vector2.UnitY * 2f;
+						player.Position = (lastChest.BottomCenter - Vector2.UnitY * 2f).Floor();
 						player.Dashes = dashes;
 
 						player.Leader.Followers = lastFollowers;

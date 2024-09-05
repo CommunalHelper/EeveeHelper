@@ -10,10 +10,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Download Everest stripped lib
-      uses: robinraju/release-downloader@v1.5
+      uses: robinraju/release-downloader@v1
       with:
         repository: EverestAPI/Everest
         latest: true
@@ -23,7 +23,7 @@ jobs:
       run: unzip lib-stripped.zip
 
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v2
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 7.0.x
 
@@ -36,7 +36,7 @@ jobs:
         CELESTEPREFIX: ${{ github.workspace }}/lib-stripped
 
     - name: Upload build
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: bin
         path: Code/bin/Debug/net452

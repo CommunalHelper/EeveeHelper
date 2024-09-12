@@ -64,6 +64,7 @@ public class RoomChest : Actor
 			OnPickup = OnPickup,
 			OnRelease = OnRelease,
 			SpeedGetter = () => Speed,
+			SpeedSetter = (speed) => Speed = speed,
 			SlowRun = false,
 			SlowFall = false
 		});

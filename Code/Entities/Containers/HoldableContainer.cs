@@ -83,6 +83,7 @@ public class HoldableContainer : Actor, IContainer
 				OnRelease = OnRelease,
 				OnHitSpring = HitSpring,
 				SpeedGetter = () => Speed,
+				SpeedSetter = (speed) => Speed = speed,
 				OnCarry = OnCarry
 			});
 

@@ -48,6 +48,7 @@ public class HoldableTiles : Actor
 				OnRelease = OnRelease,
 				OnHitSpring = HitSpring,
 				SpeedGetter = () => Speed,
+				SpeedSetter = (speed) => Speed = speed,
 				OnCarry = OnCarry
 			});
 		}

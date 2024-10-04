@@ -27,6 +27,7 @@ public class EeveeHelperModule : EverestModule
 	public static bool AdventureHelperLoaded { get; set; }
 	public static bool StyleMaskHelperLoaded { get; set; }
 	public static bool SpeedrunToolLoaded { get; set; }
+	public static bool BetterRefillGemsLoaded { get; set; }
 
 	public override void Load()
 	{
@@ -84,6 +85,11 @@ public class EeveeHelperModule : EverestModule
 			Name = "SpeedrunTool",
 			VersionString = "3.21.0"
 		});
+		BetterRefillGemsLoaded = Everest.Loader.TryGetDependency(new EverestModuleMetadata
+		{
+			Name = "BetterRefillGems",
+			VersionString = "1.0.1"
+		}, out var betterRefillGemsModule);
 
 		if (AdventureHelperLoaded)
 		{
@@ -92,6 +98,10 @@ public class EeveeHelperModule : EverestModule
 		if (SpeedrunToolLoaded)
 		{
 			SpeedrunToolCompat.Initialize();
+		}
+		if (BetterRefillGemsLoaded)
+		{
+			BetterRefillGemsCompat.Initialize(betterRefillGemsModule);
 		}
 	}
 

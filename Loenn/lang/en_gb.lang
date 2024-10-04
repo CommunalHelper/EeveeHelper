@@ -278,3 +278,11 @@ entities.EeveeHelper/InputToggleBlock.attributes.description.time=Time in second
 entities.EeveeHelper/InputToggleBlock.attributes.description.tutorialFlag=If this flag is enabled, the block will display a tutorial indicating what button to press to activate it.
 entities.EeveeHelper/InputToggleBlock.attributes.description.type=Type of button that activates the block. "Custom" is rebindable in the player's mod settings.
 entities.EeveeHelper/InputToggleBlock.attributes.description.cancellable=Whether pressing the button while the block is already moving interrupts it and sends it back.
+
+# Sharded Refill
+entities.EeveeHelper/RefillShard.placements.name.default=Sharded Refill
+entities.EeveeHelper/RefillShard.attributes.description.collectAmount=The amount of shards needed for collection. (0 for all)
+entities.EeveeHelper/RefillShard.attributes.description.spawnRefill=Whether the shards give a refill immediately or spawn a refill upon collecting all of them.
+entities.EeveeHelper/RefillShard.attributes.description.oneUse=Whether the shards respawn after collection / Whether the spawned refill is single-use.
+entities.EeveeHelper/RefillShard.attributes.description.resetOnGround=Whether touching the ground causes the shards to reset (normal seed behavior).
+entities.EeveeHelper/RefillShard.attributes.description.twoDashes=Whether the refill gives you two dashes.

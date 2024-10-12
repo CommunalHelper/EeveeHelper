@@ -289,7 +289,7 @@ public class RoomChest : Actor
 
 					foreach (var module in Everest.Modules)
 					{
-						OriginalModSessions.Add(module.Metadata.Name, module.SerializeSession(SaveData.Instance.FileSlot));
+						OriginalModSessions[module.Metadata.Name] = module.SerializeSession(SaveData.Instance.FileSlot);
 					}
 				}
 

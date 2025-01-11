@@ -60,6 +60,7 @@ public class FlagGateContainer : Entity, IContainer
 
 	private bool shaking;
 	private float shakeTimer;
+	private float shakeStrength;
 	private Vector2 shakeAmount;
 	private Random shakeRand;
 
@@ -84,6 +85,7 @@ public class FlagGateContainer : Entity, IContainer
 		//resetFlags = data.Bool("resetFlags", true);
 		canReturn = data.Bool("canReturn", true);
 		shakeTime = data.Float("shakeTime", 0.5f);
+		shakeStrength = data.Float("shakeStrength", 1f);
 		moveTime = data.Float("moveTime", 2f);
 		//progression = data.Bool("progression");
 		easer = EeveeHelperModule.EaseTypes[data.Attr("easing", "CubeOut")];
@@ -169,7 +171,7 @@ public class FlagGateContainer : Entity, IContainer
 		{
 			if (Scene.OnInterval(0.04f))
 			{
-				shakeAmount = shakeRand.ShakeVector();
+				shakeAmount = shakeStrength * shakeRand.ShakeVector();
 			}
 			if (shakeTimer > 0f)
 			{

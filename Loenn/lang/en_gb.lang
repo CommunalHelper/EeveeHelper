@@ -148,6 +148,7 @@ entities.EeveeHelper/FlagGateContainer.attributes.description.inactiveColor=The 
 entities.EeveeHelper/FlagGateContainer.attributes.description.moveFlag=The flag that activates this gate. Leave empty to function like a normal switch gate.
 entities.EeveeHelper/FlagGateContainer.attributes.description.moveTime=How long, in seconds, the container takes to move to the other node.
 entities.EeveeHelper/FlagGateContainer.attributes.description.shakeTime=How long the container shakes before moving. If set higher than 0, the container will also briefly shake when stopping.
+entities.EeveeHelper/FlagGateContainer.attributes.description.shakeStrength=How much the container moves around while shaking. 1 will give vanilla switch gate strength, 0 will make it not shake at all.
 entities.EeveeHelper/FlagGateContainer.attributes.description.easing=The easing of the container's movement between nodes.
 entities.EeveeHelper/FlagGateContainer.attributes.description.icon=The switch gate icon overlayed on the container. Can be dragged around to change position. (Icons are detected from "objects/MaxHelpingHand/flagSwitchGate/" and "objects/EeveeHelper/flagGateIcons/")
 entities.EeveeHelper/FlagGateContainer.attributes.description.canReturn=Whether the container will return to its original position if the flag is deactivated.

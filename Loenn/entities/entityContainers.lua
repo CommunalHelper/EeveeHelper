@@ -233,6 +233,7 @@ local flagGateContainer = {
                 ignoreContainerBounds = false,
                 moveFlag = "",
                 shakeTime = 0.5,
+		shakeStrength = 1.0,
                 moveTime = 2.0,
                 easing = "CubeOut",
                 icon = "objects/switchgate/icon",

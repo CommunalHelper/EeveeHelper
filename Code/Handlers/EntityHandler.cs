@@ -130,6 +130,13 @@ public class EntityHandler : IEntityHandler
 		{
 			platform.DestroyStaticMovers();
 		}
+
+		var follower = Entity.Get<Follower>();
+		if (follower != null && follower.HasLeader)
+		{
+			follower.Leader.LoseFollower(follower);
+		}
+
 		Entity.RemoveSelf();
 	}
 }

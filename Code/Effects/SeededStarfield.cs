@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 
 namespace Celeste.Mod.EeveeHelper.Effects;
+
 public class SeededStarfield : Backdrop
 {
 	public struct Star
@@ -25,7 +26,7 @@ public class SeededStarfield : Backdrop
 	public List<float> YNodes = new();
 	public Star[] Stars = new Star[128];
 
-	public SeededStarfield(Color color, float speed = 1f, int seed = 0)
+	public SeededStarfield(Color color, float speed = 1f, int seed = 0, string textureDir = "particles/starfield")
 	{
 		Color = color;
 		FlowSpeed = speed;
@@ -48,7 +49,7 @@ public class SeededStarfield : Backdrop
 			YNodes[YNodes.Count - 1 - i] = Calc.LerpClamp(YNodes[YNodes.Count - 1 - i], YNodes[0], 1f - i / 4f);
 		}
 
-		var atlasSubtextures = GFX.Game.GetAtlasSubtextures("particles/starfield/");
+		var atlasSubtextures = GFX.Game.GetAtlasSubtextures(textureDir + "/");
 		for (var j = 0; j < Stars.Length; j++)
 		{
 			var num3 = Calc.Random.NextFloat(1f);

@@ -1,4 +1,5 @@
 ﻿using Celeste.Mod.EeveeHelper.Compat;
+using Celeste.Mod.EeveeHelper.Components;
 using Celeste.Mod.EeveeHelper.Effects;
 using Celeste.Mod.EeveeHelper.Entities;
 using Celeste.Mod.EeveeHelper.Handlers;
@@ -36,6 +37,7 @@ public class EeveeHelperModule : EverestModule
 		HoldableTiles.Load();
 		PatientBooster.Load();
 		CoreZone.Load();
+		FreezeUpdateHook.Load();
 
 		Everest.Events.Level.OnLoadBackdrop += this.OnLoadBackdrop;
 
@@ -64,6 +66,7 @@ public class EeveeHelperModule : EverestModule
 		HoldableTiles.Unload();
 		PatientBooster.Unload();
 		CoreZone.Unload();
+		FreezeUpdateHook.Unload();
 	}
 
 	public override void Initialize()
@@ -103,6 +106,12 @@ public class EeveeHelperModule : EverestModule
 		{
 			BetterRefillGemsCompat.Initialize(betterRefillGemsModule);
 		}
+	}
+
+	public override void OnInputInitialize()
+	{
+		base.OnInputInitialize();
+		Settings.ActivateCustomInputBlock.BufferTime = 0f;
 	}
 
 	private Backdrop OnLoadBackdrop(MapData map, BinaryPacker.Element child, BinaryPacker.Element above)

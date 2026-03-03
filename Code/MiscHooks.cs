@@ -616,7 +616,7 @@ public static class MiscHooks
 		{
 			var data = DynamicData.For(self);
 
-			if (data.TryGet<float>("EeveeHelper_cPopDelay", out var cPopDelay) && cPopDelay > 0)
+			if (data.Get("EeveeHelper_cPopDelay") is float cPopDelay && cPopDelay > 0)
 			{
 				return;
 			}
@@ -646,7 +646,6 @@ public static class MiscHooks
 	private static void Player_ClimbBegin(On.Celeste.Player.orig_ClimbBegin orig, Player self)
 	{
 		orig(self);
-
 		DynamicData.For(self).Set("EeveeHelper_cPopDelay", 0f);
 	}
 
@@ -654,7 +653,7 @@ public static class MiscHooks
 	{
 		var data = DynamicData.For(self);
 
-		if (!data.TryGet<float>("EeveeHelper_cPopDelay", out var cPopDelay) || cPopDelay <= 0f)
+		if (data.Get("EeveeHelper_cPopDelay") is not float cPopDelay || cPopDelay <= 0f)
 		{
 			return orig(self);
 		}
@@ -728,8 +727,7 @@ public static class MiscHooks
 		if (self.StateMachine.State == Player.StClimb)
 		{
 			var data = DynamicData.For(self);
-
-			if (data.TryGet<float>("EeveeHelper_cPopDelay", out var cPopDelay) && cPopDelay > 0f)
+			if (data.Get("EeveeHelper_cPopDelay") is float cPopDelay && cPopDelay > 0f)
 			{
 				return self.CollideCheck(solid, self.Position + new Vector2((float)self.Facing, -1f));
 			}

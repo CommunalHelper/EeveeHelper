@@ -277,7 +277,7 @@ public class EntityContainerMover : EntityContainer
 		{
 			if (pair.Value is Vector2 vector
 				&& !IgnoredAnchors.Contains(pair.Key)
-				&& !(IgnoredAnchorsPerType.TryGetValue(entity.GetType(), out var ignoredAnchors) && ignoredAnchors.Contains(pair.Key))
+				&& (!IgnoredAnchorsPerType.TryGetValue(entity.GetType(), out var ignoredAnchors) || !ignoredAnchors.Contains(pair.Key))
 				&& (vector == EeveeUtils.GetPosition(entity) || CommonAnchors.Contains(pair.Key)))
 			{
 				result.Add(pair.Key);

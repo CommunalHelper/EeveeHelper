@@ -274,16 +274,17 @@ public class EntityContainerMover : EntityContainer
 	{
 		var result = new List<string>();
 		var data = new InheritedDynData(entity);
+		
 		var type = entity.GetType();
+		var ignoredAnchorsForType = IgnoredAnchorsPerType.SelectMany(kvp => kvp.Key.IsAssignableFrom(type) ? kvp.Value : []).ToArray();
+		
 		foreach (var pair in data)
 		{
 			if (pair.Value is Vector2 vector
 				&& !IgnoredAnchors.Contains(pair.Key)
-				&& IgnoredAnchorsPerType.All(kvp => !kvp.Key.IsAssignableFrom(type) || !kvp.Value.Contains(pair.Key))
+				&& !ignoredAnchorsForType.Contains(pair.Key)
 				&& (vector == EeveeUtils.GetPosition(entity) || CommonAnchors.Contains(pair.Key)))
-			{
 				result.Add(pair.Key);
-			}
 		}
 		return result;
 	}

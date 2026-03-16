@@ -19,6 +19,8 @@ public class EntityContainerMover : EntityContainer
 	{
 		"Position", "ExactPosition", "TopLeft", "TopCenter", "TopRight", "Center", "CenterLeft", "CenterRight", "BottomLeft", "BottomCenter", "BottomRight"
 	};
+	private static Dictionary<Type, HashSet<string>> IgnoredAnchorsPerType = new();
+	
 	private static HashSet<string> CommonAnchors = new()
 	{
 		"anchor", "anchorPosition", "start", "startPosition"
@@ -273,12 +275,23 @@ public class EntityContainerMover : EntityContainer
 		var data = new InheritedDynData(entity);
 		foreach (var pair in data)
 		{
-			if (pair.Value is Vector2 vector && !IgnoredAnchors.Contains(pair.Key) && (vector == EeveeUtils.GetPosition(entity) || CommonAnchors.Contains(pair.Key)))
+			if (pair.Value is Vector2 vector
+				&& !IgnoredAnchors.Contains(pair.Key)
+				&& !(IgnoredAnchorsPerType.TryGetValue(entity.GetType(), out var ignoredAnchors) && ignoredAnchors.Contains(pair.Key))
+				&& (vector == EeveeUtils.GetPosition(entity) || CommonAnchors.Contains(pair.Key)))
 			{
 				result.Add(pair.Key);
 			}
 		}
 		return result;
+	}
+
+	public static void AddIgnoredAnchors(Type type, HashSet<string> anchors)
+	{
+		if (IgnoredAnchorsPerType.TryGetValue(type, out var alreadyIgnoredAnchors))
+			alreadyIgnoredAnchors.UnionWith(anchors);
+		else
+			IgnoredAnchorsPerType.Add(type, anchors);
 	}
 
 	public static void AddEntityHandler(Type entityType, Type handlerType)

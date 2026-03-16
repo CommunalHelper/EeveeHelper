@@ -4,6 +4,7 @@ using Celeste.Mod.EeveeHelper.Entities;
 using Celeste.Mod.EeveeHelper.Handlers;
 using Celeste.Mod.EeveeHelper.Handlers.Impl;
 using Monocle;
+using MonoMod.ModInterop;
 using System;
 using System.Collections.Generic;
 
@@ -31,6 +32,8 @@ public class EeveeHelperModule : EverestModule
 
 	public override void Load()
 	{
+		typeof(Exports).ModInterop();
+		
 		MiscHooks.Load();
 		RoomChest.Load();
 		HoldableTiles.Load();

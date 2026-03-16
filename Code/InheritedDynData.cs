@@ -82,6 +82,8 @@ public sealed class InheritedDynData : IDisposable, IEnumerable<KeyValuePair<str
 
 	public object Set(string name, object value)
 	{
+		Logger.Debug(nameof(EeveeHelper), $"setting '{name}' = {value}");
+		
 		foreach (var data in _Data)
 		{
 			if (data.TryGet(name, out _))

@@ -5,6 +5,7 @@ using Monocle;
 using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Celeste.Mod.EeveeHelper.Components;
 
@@ -273,11 +274,12 @@ public class EntityContainerMover : EntityContainer
 	{
 		var result = new List<string>();
 		var data = new InheritedDynData(entity);
+		var type = entity.GetType();
 		foreach (var pair in data)
 		{
 			if (pair.Value is Vector2 vector
 				&& !IgnoredAnchors.Contains(pair.Key)
-				&& (!IgnoredAnchorsPerType.TryGetValue(entity.GetType(), out var ignoredAnchors) || !ignoredAnchors.Contains(pair.Key))
+				&& IgnoredAnchorsPerType.All(kvp => !kvp.Key.IsAssignableFrom(type) || !kvp.Value.Contains(pair.Key))
 				&& (vector == EeveeUtils.GetPosition(entity) || CommonAnchors.Contains(pair.Key)))
 			{
 				result.Add(pair.Key);

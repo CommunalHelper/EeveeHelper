@@ -4,6 +4,7 @@ using Monocle;
 using System;
 using System.Collections;
 using System.Linq;
+using Celeste.Mod.EeveeHelper.Components;
 
 namespace Celeste.Mod.EeveeHelper.Entities;
 
@@ -18,15 +19,16 @@ public class InputToggleBlock : Solid
 		Custom
 	}
 
-	private string texture;
-	private Types type;
-	private float time;
-	private bool cancellable;
-	private string tutorialFlag;
+	private readonly string texture;
+	private readonly Types type;
+	private readonly float time;
+	private readonly bool cancellable;
+	private readonly string tutorialFlag;
 
 	private InputListener listener;
 	private PathRenderer path;
 	private BirdTutorialGui gui;
+
 	private Vector2 start;
 	private Vector2 end;
 	private float lerp;
@@ -51,14 +53,14 @@ public class InputToggleBlock : Solid
 	{
 		base.Added(scene);
 
-		scene.Add(listener = new InputListener(type, Depth + 1));
+		scene.Add(listener = new InputListener(type));
 
 		var color = Color.White;
 		switch (type)
 		{
-			case Types.Grab: color = new Color(1f, 0f, 1f); break;
-			case Types.Jump: color = new Color(1f, 1f, 0f); break;
-			case Types.Dash: color = new Color(0f, 1f, 1f); break;
+			case Types.Grab:   color = new Color(1f, 0f, 1f); break;
+			case Types.Jump:   color = new Color(1f, 1f, 0f); break;
+			case Types.Dash:   color = new Color(0f, 1f, 1f); break;
 			case Types.Custom: color = new Color(0f, 0f, 1f); break;
 		}
 
@@ -178,9 +180,9 @@ public class InputToggleBlock : Solid
 
 	private class PathRenderer : Entity
 	{
-		private Vector2 endpoint;
-		private MTexture texture;
-		private Color color;
+		private readonly Vector2 endpoint;
+		private readonly MTexture texture;
+		private readonly Color color;
 
 		public PathRenderer(Vector2 start, Vector2 end, string texturePath, string textureType, Color pathColor) : base(start)
 		{
@@ -202,43 +204,48 @@ public class InputToggleBlock : Solid
 
 	private class InputListener : Entity
 	{
-		private Types inputType;
+		private readonly Types inputType;
+
 		private int presses = 0;
 		private bool wasPressed;
 
-		public InputListener(Types type, int depth)
+		public InputListener(Types type)
 		{
 			inputType = type;
 
-			Depth = depth;
+			Depth = int.MaxValue; // need to update before the player to be able to pick up buffered jump/dash inputs
 			AddTag(Tags.FrozenUpdate);
+			Add(new FreezeUpdateHook(UpdatePress)); // update during freezeframes
 		}
 
 		public override void Update()
 		{
 			base.Update();
 
-			var pressed = false;
+			UpdatePress();
+		}
+
+		private void UpdatePress()
+		{
+			bool pressed = false;
 
 			switch (inputType)
 			{
-				case Types.Grab: pressed = Input.Grab.Pressed; wasPressed = false; break;
-				case Types.Jump: pressed = Input.Jump.Pressed; break;
-				case Types.Dash: pressed = Input.Dash.Pressed || Input.CrouchDash.Pressed; break;
-				case Types.Custom: pressed = EeveeHelperModule.Settings.ActivateCustomInputBlock.Pressed; wasPressed = false; break;
+				case Types.Grab:   pressed = Input.Grab.Pressed; break;
+				case Types.Jump:   pressed = Input.Jump.Pressed; break;
+				case Types.Dash:   pressed = Input.Dash.Pressed || (Settings.Instance.CrouchDashMode == CrouchDashModes.Press && Input.CrouchDash.Pressed); break;
+				case Types.Custom: pressed = EeveeHelperModule.Settings.ActivateCustomInputBlock.Pressed; break;
 			}
 
 			if (pressed && !wasPressed)
-			{
 				presses++;
-			}
 
 			wasPressed = pressed;
 		}
 
 		public bool ConsumePress(bool cancellable)
 		{
-			var pressed = cancellable ? presses % 2 == 1 : presses > 0;
+			bool pressed = cancellable ? presses % 2 == 1 : presses > 0;
 
 			presses = 0;
 

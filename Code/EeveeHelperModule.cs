@@ -37,7 +37,7 @@ public class EeveeHelperModule : EverestModule
 		PatientBooster.Load();
 		CoreZone.Load();
 
-		Everest.Events.Level.OnLoadBackdrop += this.OnLoadBackdrop;
+		Everest.Events.Level.OnLoadBackdrop += OnLoadBackdrop;
 
 		EntityHandler.RegisterInherited<Water>((entity, container) => new WaterHandler(entity));
 		EntityHandler.RegisterInherited<TrackSpinner>((entity, container) => new TrackSpinnerHandler(entity));
@@ -64,6 +64,8 @@ public class EeveeHelperModule : EverestModule
 		HoldableTiles.Unload();
 		PatientBooster.Unload();
 		CoreZone.Unload();
+
+		Everest.Events.Level.OnLoadBackdrop -= OnLoadBackdrop;
 	}
 
 	public override void Initialize()
@@ -105,12 +107,11 @@ public class EeveeHelperModule : EverestModule
 		}
 	}
 
-	private Backdrop OnLoadBackdrop(MapData map, BinaryPacker.Element child, BinaryPacker.Element above)
+	private static Backdrop OnLoadBackdrop(MapData map, BinaryPacker.Element child, BinaryPacker.Element above)
 	{
 		if (child.Name.Equals("EeveeHelper/SeededStarfield", StringComparison.OrdinalIgnoreCase))
-		{
-			return new SeededStarfield(Calc.HexToColor(child.Attr("color")), child.AttrFloat("speed", 1f), child.AttrInt("seed"));
-		}
+			return new SeededStarfield(Calc.HexToColor(child.Attr("color", "ffffff")) * child.AttrFloat("alpha", 1f), child.AttrFloat("speed", 1f), child.AttrInt("seed", 0), child.Attr("textureDir", "particles/starfield"));
+
 		return null;
 	}
 

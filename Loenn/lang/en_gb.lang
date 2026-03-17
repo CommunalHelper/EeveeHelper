@@ -287,3 +287,15 @@ entities.EeveeHelper/RefillShard.attributes.description.spawnRefill=Whether the 
 entities.EeveeHelper/RefillShard.attributes.description.oneUse=Whether the shards respawn after collection / Whether the spawned refill is single-use.
 entities.EeveeHelper/RefillShard.attributes.description.resetOnGround=Whether touching the ground causes the shards to reset (normal seed behavior).
 entities.EeveeHelper/RefillShard.attributes.description.twoDashes=Whether the refill gives you two dashes.
+
+# Seeded Starfield
+style.effects.EeveeHelper/SeededStarfield.name=Seeded Starfield
+style.effects.EeveeHelper/SeededStarfield.attribute.scrollx=Scroll X
+style.effects.EeveeHelper/SeededStarfield.attribute.scrolly=Scroll Y
+style.effects.EeveeHelper/SeededStarfield.description.color=The color of the stars.
+style.effects.EeveeHelper/SeededStarfield.description.alpha=The alpha of the stars.
+style.effects.EeveeHelper/SeededStarfield.description.textureDir=The path to the folder containing the star textures, relative to Graphics/Atlases/Gameplay/.
+style.effects.EeveeHelper/SeededStarfield.description.scrollx=Determines the parallax scrolling of the stars along the X axis.
+style.effects.EeveeHelper/SeededStarfield.description.scrolly=Determines the parallax scrolling of the stars along the Y axis.
+style.effects.EeveeHelper/SeededStarfield.description.speed=A multiplier to apply to the speed of the stars.
+style.effects.EeveeHelper/SeededStarfield.description.seed=The random seed used to determine the initial appearance of the starfield.\nSetting this to 0 will cause the starfield to be different every time the map is loaded.

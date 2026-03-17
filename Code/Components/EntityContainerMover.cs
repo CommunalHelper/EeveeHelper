@@ -16,16 +16,11 @@ public class EntityContainerMover : EntityContainer
 
 	private static Dictionary<Type, List<Type>> EntityHandlers = new();
 
-	private static HashSet<string> IgnoredAnchors = new()
-	{
-		"Position", "ExactPosition", "TopLeft", "TopCenter", "TopRight", "Center", "CenterLeft", "CenterRight", "BottomLeft", "BottomCenter", "BottomRight"
-	};
-	private static Dictionary<Type, HashSet<string>> IgnoredAnchorsPerType = new();
+	private static readonly HashSet<string> DefaultWhitelistedAnchors = ["anchor", "anchorPosition", "start", "startPosition"];
+	private static readonly Dictionary<Type, (bool, HashSet<string>)> WhitelistedAnchors = new();
 	
-	private static HashSet<string> CommonAnchors = new()
-	{
-		"anchor", "anchorPosition", "start", "startPosition"
-	};
+	private static readonly HashSet<string> DefaultBlacklistedAnchors = ["Position", "ExactPosition", "TopLeft", "TopCenter", "TopRight", "Center", "CenterLeft", "CenterRight", "BottomLeft", "BottomCenter", "BottomRight"];
+	private static readonly Dictionary<Type, (bool, HashSet<string>)> BlacklistedAnchors = new();
 
 	public Vector4 Padding;
 
@@ -270,31 +265,85 @@ public class EntityContainerMover : EntityContainer
 		}) ?? new List<string>();
 	}
 
+	private static HashSet<string> GetAnchorFields(Dictionary<Type, (bool, HashSet<string>)> anchorFieldDict, Type target)
+	{
+		var addedAnchorFields = false;
+		var result = new HashSet<string>();
+		foreach (var (fieldHolder, (includeDerived, fields)) in anchorFieldDict)
+		{
+			if (includeDerived
+				? !fieldHolder.IsAssignableFrom(target)
+				: fieldHolder != target)
+				continue;
+			
+			result.UnionWith(fields);
+			addedAnchorFields = true;
+		}
+		
+		return addedAnchorFields ? result : null;
+	}
+
 	public static List<string> FindAnchors(Entity entity)
 	{
 		var result = new List<string>();
 		var data = new InheritedDynData(entity);
 		
 		var type = entity.GetType();
-		var ignoredAnchorsForType = IgnoredAnchorsPerType.SelectMany(kvp => kvp.Key.IsAssignableFrom(type) ? kvp.Value : []).ToArray();
+		var whitelistedAnchorsForType = GetAnchorFields(WhitelistedAnchors, type);
+		var blacklistedAnchorsForType = GetAnchorFields(BlacklistedAnchors, type);
 		
-		foreach (var pair in data)
+		foreach (var (field, value) in data)
 		{
-			if (pair.Value is Vector2 vector
-				&& !IgnoredAnchors.Contains(pair.Key)
-				&& !ignoredAnchorsForType.Contains(pair.Key)
-				&& (vector == EeveeUtils.GetPosition(entity) || CommonAnchors.Contains(pair.Key)))
-				result.Add(pair.Key);
+			if (value is not Vector2 vector)
+				continue;
+			
+			var whitelisted = whitelistedAnchorsForType?.Contains(field)
+				?? DefaultWhitelistedAnchors.Contains(field) || vector == EeveeUtils.GetPosition(entity);
+			var blacklisted = blacklistedAnchorsForType?.Contains(field)
+				?? DefaultBlacklistedAnchors.Contains(field);
+			if (whitelisted && !blacklisted)
+				result.Add(field);
 		}
+		
 		return result;
 	}
-
-	public static void AddIgnoredAnchors(Type type, HashSet<string> anchors)
+	
+	/// <summary>
+	/// Registers whitelisted anchor members for a type (and for all its derived types if <paramref name="includeDerived"/> is <c>true</c>),
+	/// which marks these members as "anchors", i.e. EeveeHelper will update them when an entity of this type is moved in a container.<br/>
+	/// Once a type has been registered in this whitelist, EeveeHelper will use that instead of the automatic whitelist, which means only
+	/// the members present here will be used as anchors. <br/>
+	/// Passing an empty <see cref="HashSet{T}"/> to <paramref name="anchors"/> will exempt this type from the automatic whitelist, meaning no
+	/// members will be used as anchors for this type.
+	/// </summary>
+	/// <param name="type">The type to register the whitelisted anchors for</param>
+	/// <param name="includeDerived">Whether to whitelist these members for any derived types of the registered type as well as the registered type itself</param>
+	/// <param name="anchors">The names of all members of this type and any base types to register</param>
+	public static void RegisterWhitelistedAnchors(Type type, bool includeDerived, HashSet<string> anchors)
 	{
-		if (IgnoredAnchorsPerType.TryGetValue(type, out var alreadyIgnoredAnchors))
-			alreadyIgnoredAnchors.UnionWith(anchors);
+		if (WhitelistedAnchors.TryGetValue(type, out var data) && data.Item1 == includeDerived)
+			data.Item2.UnionWith(anchors);
 		else
-			IgnoredAnchorsPerType.Add(type, anchors);
+			WhitelistedAnchors.Add(type, (includeDerived, anchors));
+	}
+	
+	/// <summary>
+	/// Registers blacklisted anchor members for a type (and for all its derived types if <paramref name="includeDerived"/> is <c>true</c>),
+	/// which marks these members as never to be used as "anchors", i.e. EeveeHelper will not update them when an entity of this type is
+	/// moved in a container.<br/>
+	/// Once a type has been registered in this blacklist, EeveeHelper will use that instead of the automatic blacklist, which means its
+	/// `Position`, `ExactPosition`, `Center`, etc. members will be able to be used as anchors if not present here.<br/>
+	/// Passing an empty <see cref="HashSet{T}"/> to <paramref name="anchors"/> will exempt this type from the automatic blacklist.
+	/// </summary>
+	/// <param name="type">The type to register the blacklisted anchors for</param>
+	/// <param name="includeDerived">Whether to blacklist these members for any derived types of the registered type as well as the registered type itself</param>
+	/// <param name="anchors">The names of all members of this type and any base types to register</param>
+	public static void RegisterBlacklistedAnchors(Type type, bool includeDerived, HashSet<string> anchors)
+	{
+		if (BlacklistedAnchors.TryGetValue(type, out var data) && data.Item1 == includeDerived)
+			data.Item2.UnionWith(anchors);
+		else
+			BlacklistedAnchors.Add(type, (includeDerived, anchors));
 	}
 
 	public static void AddEntityHandler(Type entityType, Type handlerType)

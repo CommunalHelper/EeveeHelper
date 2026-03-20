@@ -11,7 +11,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     
     - name: Download Everest stripped lib
       uses: robinraju/release-downloader@v1
@@ -24,7 +24,7 @@ jobs:
       run: unzip lib-stripped.zip
 
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v5
 
     - name: Install dependencies
       run: dotnet restore
@@ -35,7 +35,7 @@ jobs:
         CELESTEPREFIX: ${{ github.workspace }}/lib-stripped
         
     - name: Upload ZIP
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: EeveeHelper
         path: |

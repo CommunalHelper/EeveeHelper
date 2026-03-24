@@ -2,8 +2,8 @@
   Version: 1.12.4
   DLL: Code/bin/EeveeHelper.dll
   Dependencies:
-    - Name: Everest
-      Version: 1.5577.0
+    - Name: EverestCore
+      Version: 1.5986.0
   OptionalDependencies:
     - Name: AdventureHelper
       Version: 1.5.1

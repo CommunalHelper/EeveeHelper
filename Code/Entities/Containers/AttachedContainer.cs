@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Monocle;
 using System;
 using System.Collections.Generic;
+using Celeste.Mod.Registry;
 
 namespace Celeste.Mod.EeveeHelper.Entities;
 
@@ -256,7 +257,7 @@ public class AttachedContainer : Entity, IContainer
 				Entity closest = null;
 				foreach (var entity in Scene.Entities)
 				{
-					if (string.IsNullOrEmpty(attachTo) ? (entity is JumpThru || entity is Solid) : entity.GetType().Name == attachTo)
+					if (string.IsNullOrEmpty(attachTo) ? (entity is JumpThru || entity is Solid) : CheckTypeName(entity, attachTo))
 					{
 						if (node != null && entity.CollidePoint(Center + node.Value))
 						{
@@ -319,6 +320,16 @@ public class AttachedContainer : Entity, IContainer
 			OnAttach(mover.Platform);
 		}
 		return false;
+	}
+
+	private static bool CheckTypeName(Entity entity, string typeName)
+	{
+		var type = entity.GetType();
+
+		return type.Name == typeName
+			   || (entity.SourceData?.Name is { } sourceSid
+				   ? sourceSid == typeName
+				   : EntityRegistry.GetKnownSidsFromType(type).Contains(typeName));
 	}
 
 	private bool IsValid(Entity entity)

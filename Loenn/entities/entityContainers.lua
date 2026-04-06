@@ -3,6 +3,7 @@ local drawableRectangle = require("structs.drawable_rectangle")
 local depths = require("consts.object_depths")
 local drawing = require("utils.drawing")
 local utils = require("utils")
+local eeveeHelper = require("mods").requireFromPlugin("libraries.eeveeHelper")
 
 local containerFill = { 1.0, 0.6, 0.6, 0.4 }
 local containerBorder = { 1.0, 0.6, 0.6, 1 }
@@ -92,6 +93,12 @@ local attachedContainer = {
     },
 
     fieldOrder = { "x", "y", "width", "height", "containMode", "containFlag", "whitelist", "blacklist", "attachMode", "attachFlag", "relativeAttachX", "relativeAttachY", "attachTo" },
+    fieldInformation = {
+        attachTo = {
+            options = function() return eeveeHelper.getMapSIDs() end,
+            searchable = true
+        }
+    },
 
     nodeRectangle = function(room, entity, node)
         return utils.rectangle(node.x - 2, node.y - 2, 5, 5)
@@ -541,6 +548,24 @@ local depths = {
 
 
 local sharedFieldInformation = {
+    whitelist = {
+        fieldType = "list",
+        elementSeparator = ",",
+        elementDefault = "",
+        elementOptions = {
+             options = function() return eeveeHelper.getMapSIDs() end,
+             searchable = true
+        }
+    },
+    blacklist = {
+        fieldType = "list",
+        elementSeparator = ",",
+        elementDefault = "",
+        elementOptions = {
+             options = function() return eeveeHelper.getMapSIDs() end,
+             searchable = true
+        }
+    },
     containMode = {
         options = containModes,
         editable = false

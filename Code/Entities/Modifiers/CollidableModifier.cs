@@ -36,7 +36,7 @@ public class CollidableModifier : Entity, IContainer
 
 		Add(Container = new EntityContainer(data)
 		{
-			IsValid = e => !(e is Solidifier solidifier && Container.GetEntities().Contains(solidifier.Entity)) && e is not Hazard,
+			IsValid = e => !(e is Solidifier solidifier && Container.ContainsEntity(solidifier.Entity)) && e is not Hazard,
 			DefaultIgnored = e => e.Get<EntityContainer>() != null,
 			OnAttach = h => OnAttach(h.Entity),
 			OnDetach = h => OnDetach(h.Entity)

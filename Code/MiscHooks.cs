@@ -309,8 +309,8 @@ public static class MiscHooks
 	}
 	// If this statement is *true*, Collide Check returns *false*
 	private static bool CheckContainers(Entity a, Entity b) =>
-		(a is IContainer iA && iA.Container is { } aContainer && aContainer != null && !aContainer.CollideWithContained && aContainer.GetEntities().Contains(b)) ||
-		(b is IContainer iB && iB.Container is { } bContainer && bContainer != null && !bContainer.CollideWithContained && bContainer.GetEntities().Contains(a)) ||
+		(a is IContainer iA && iA.Container is { } aContainer && !aContainer.CollideWithContained && aContainer.ContainsEntity(b)) ||
+		(b is IContainer iB && iB.Container is { } bContainer && !bContainer.CollideWithContained && bContainer.ContainsEntity(a)) ||
 		(a is CollidableModifier.Solidifier aSolid && aSolid.Entity == b) ||
 		(b is CollidableModifier.Solidifier bSolid && bSolid.Entity == a); 
 

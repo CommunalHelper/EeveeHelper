@@ -297,14 +297,22 @@ public static class MiscHooks
 
 	private static void Collide_Check_Entity_Entity(ILContext il)
 	{
-		ILCursor cursor = new ILCursor(il);
-		ILLabel label = null;
-		if(cursor.TryGotoNext(MoveType.After, i => i.MatchBeq(out label)))
+		ILCursor cursor = new(il);
+
+		if (cursor.TryGotoNext(MoveType.After, i => i.MatchCallvirt<Collider>("Collide")))
 		{
+			ILLabel returnResult = cursor.DefineLabel();
+			cursor.Emit(OpCodes.Dup);
+			cursor.Emit(OpCodes.Brfalse, returnResult);
+
+			// return/calculate !CheckContainers(a, b) only if the collision was true in the first place
+			cursor.Emit(OpCodes.Pop);
 			cursor.Emit(OpCodes.Ldarg_0);
 			cursor.Emit(OpCodes.Ldarg_1);
 			cursor.Emit(OpCodes.Call, typeof(MiscHooks).GetMethod(nameof(CheckContainers), BindingFlags.NonPublic | BindingFlags.Static));
-			cursor.Emit(OpCodes.Brtrue, label);
+			cursor.Emit(OpCodes.Ldc_I4_0);
+			cursor.Emit(OpCodes.Ceq);
+			cursor.MarkLabel(returnResult);
 		}
 	}
 	// If this statement is *true*, Collide Check returns *false*

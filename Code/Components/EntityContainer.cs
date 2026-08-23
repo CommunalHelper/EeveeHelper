@@ -199,10 +199,15 @@ public class EntityContainer : Component
 		}
 		handler.OnDetach(this);
 	}
-	
+
 	public virtual bool ContainsEntity(Entity entity)
 	{
-		return entity != null && HandlersFor.ContainsKey(entity);
+		foreach (IEntityHandler handler in Contained)
+		{
+			if (handler.Entity == entity) 
+				return true;
+		} 
+		return false;
 	}
 
 	protected List<Tuple<string, int>> ParseList(string list)

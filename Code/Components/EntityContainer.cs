@@ -186,6 +186,16 @@ public class EntityContainer : Component
 		handler.OnDetach(this);
 	}
 
+	public virtual bool ContainsEntity(Entity entity)
+	{
+		foreach (IEntityHandler handler in Contained)
+		{
+			if (handler.Entity == entity) 
+				return true;
+		} 
+		return false;
+	}
+
 	/// <summary>
 	/// Parses a comma separated list of C# short type names or entity SIDs, with each type name or SID optionally followed by specific indices to affect, separated by colons.
 	/// </summary>

@@ -4,6 +4,7 @@ using Monocle;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Celeste.Mod.Registry;
 
 namespace Celeste.Mod.EeveeHelper.Components;
 
@@ -18,10 +19,11 @@ public class EntityContainer : Component
 		DelayedRoomStart
 	}
 
-	public List<IEntityHandler> Contained = new();
-	public Dictionary<Entity, List<IEntityHandler>> HandlersFor = new();
-	public List<Tuple<string, int>> Blacklist = new();
-	public List<Tuple<string, int>> Whitelist = new();
+	public List<IEntityHandler> Contained = [];
+	public Dictionary<Entity, List<IEntityHandler>> HandlersFor = [];
+	public Dictionary<string, HashSet<int>> Blacklist = [];
+	public Dictionary<string, HashSet<int>> Whitelist = [];
+
 	public ContainMode Mode = ContainMode.RoomStart;
 	public string ContainFlag;
 	public bool NotFlag;
@@ -37,23 +39,20 @@ public class EntityContainer : Component
 	public bool Attached;
 	public bool CollideWithContained;
 
-	private List<IEntityHandler> containedSaved = new();
+	private List<IEntityHandler> containedSaved = [];
 	private bool updatedOnce;
 
 	public EntityContainer() : base(true, true) { }
 
 	public EntityContainer(EntityData data) : this()
 	{
-		if (data.Attr("whitelist").ToLower() == "all")
-		{
+		var whitelistString = data.Attr("whitelist");
+		if (whitelistString.Equals("all", StringComparison.OrdinalIgnoreCase))
 			WhitelistAll = true;
-		}
 		else
-		{
-			Whitelist = ParseList(data.Attr("whitelist"));
-		}
+			Whitelist = ParseEntityTypeList(data.Attr("whitelist"));
 
-		Blacklist = ParseList(data.Attr("blacklist"));
+		Blacklist = ParseEntityTypeList(data.Attr("blacklist"));
 		Mode = data.Enum("containMode", ContainMode.FlagChanged);
 		var flag = EeveeUtils.ParseFlagAttr(data.Attr("containFlag"));
 		ContainFlag = flag.Item1;
@@ -131,34 +130,26 @@ public class EntityContainer : Component
 
 	public virtual List<IEntityHandler> GetHandlersFor(Entity entity)
 	{
-		if (entity == null || !HandlersFor.ContainsKey(entity))
-		{
-			return new List<IEntityHandler>();
-		}
-		else
-		{
-			return HandlersFor[entity];
-		}
+		if (entity != null && HandlersFor.TryGetValue(entity, out var handlers))
+			return handlers;
+
+		return new List<IEntityHandler>();
 	}
 
 	public virtual bool HasHandlerFor<T>(Entity entity)
 	{
-		if (entity == null || !HandlersFor.ContainsKey(entity))
-		{
-			return false;
-		}
+		if (entity != null && HandlersFor.TryGetValue(entity, out var handlers))
+			return handlers.Any(h => h is T);
 
-		return HandlersFor[entity].Any(h => h is T);
+		return false;
 	}
 
 	public virtual bool IsFirstHandler(IEntityHandler handler)
 	{
-		if (!HandlersFor.ContainsKey(handler.Entity))
-		{
-			return true;
-		}
+		if (HandlersFor.TryGetValue(handler.Entity, out var handlers))
+			return handlers[0] == handler;
 
-		return HandlersFor[handler.Entity][0] == handler;
+		return true;
 	}
 
 	public virtual List<Entity> GetEntities()
@@ -181,10 +172,7 @@ public class EntityContainer : Component
 		Contained.Add(handler);
 
 		if (!HandlersFor.TryGetValue(handler.Entity, out var handlers))
-		{
-			handlers = new List<IEntityHandler>();
-			HandlersFor.Add(handler.Entity, handlers);
-		}
+			HandlersFor[handler.Entity] = handlers = [];
 		handlers.Add(handler);
 	}
 
@@ -194,9 +182,7 @@ public class EntityContainer : Component
 		var handlers = HandlersFor[handler.Entity];
 		handlers.Remove(handler);
 		if (handlers.Count == 0)
-		{
 			HandlersFor.Remove(handler.Entity);
-		}
 		handler.OnDetach(this);
 	}
 
@@ -210,73 +196,125 @@ public class EntityContainer : Component
 		return false;
 	}
 
-	protected List<Tuple<string, int>> ParseList(string list)
+	/// <summary>
+	/// Parses a comma separated list of C# short type names or entity SIDs, with each type name or SID optionally followed by specific indices to affect, separated by colons.
+	/// </summary>
+	/// <param name="list">
+	/// A comma separated list of C# short type names or entity SIDs, with each type name or SID optionally followed by specific indices to affect, separated by colons (e.g. <c>"MoveBlock,dashBlock,Spring:2,refill:1:2:4"</c>).
+	/// If no indices are specified for a type name/SID, an index of <c>-1</c> will be added by default.
+	/// </param>
+	/// <returns>A dictionary containing C# short type names and entity SIDs as its keys, with hash sets containing their affected indices as its values.</returns>
+	protected static Dictionary<string, HashSet<int>> ParseEntityTypeList(string list)
 	{
-		return list.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(entry =>
+		var result = new Dictionary<string, HashSet<int>>();
+		foreach (string entry in list.Split(',', StringSplitOptions.RemoveEmptyEntries))
 		{
 			var split = entry.Split(':');
-			if (split.Length >= 2 && int.TryParse(split[1], out var count))
+
+			var entityType = split[0];
+			if (!result.TryGetValue(entityType, out var affectedIndices))
+				result[entityType] = affectedIndices = [];
+
+			if (split.Length >= 2)
 			{
-				return Tuple.Create(split[0], count);
+				for (int i = 1; i < split.Length; i++)
+				{
+					if (int.TryParse(split[i], out var affectedIndex))
+					{
+						affectedIndices.Add(affectedIndex);
+					}
+				}
 			}
 			else
 			{
-				return Tuple.Create(entry, -1);
+				affectedIndices.Add(-1);
 			}
-		}).ToList();
+		}
+
+		return result;
+	}
+
+	/// <summary>
+	/// Checks if a type list contains an entity's C# short type name or entity SID.
+	/// If the entity has no SID in its <see cref="Entity.SourceData"/>, uses the SIDs given by <see cref="EntityRegistry.GetKnownSidsFromType"/> instead.
+	/// </summary>
+	/// <param name="typeList">A dictionary containing C# short type names and entity SIDs as its keys.</param>
+	/// <param name="entity">An entity with the type or SID to locate in the type list.</param>
+	/// <returns> <see langword="true"/> if the type list contains the entity's C# short type name or entity SID; otherwise, <see langword="false"/>.</returns>
+	protected static bool TypeListContains(Dictionary<string, HashSet<int>> typeList, Entity entity)
+	{
+		var type = entity.GetType();
+
+		if (typeList.ContainsKey(type.Name))
+			return true;
+
+		if (entity.SourceData?.Name is { } sourceSid
+			? typeList.ContainsKey(sourceSid)
+			: EntityRegistry.GetKnownSidsFromType(type).Any(typeList.ContainsKey))
+			return true;
+
+		return false;
+	}
+
+	/// <summary>
+	/// Checks if a type list contains an entity's C# short type name or entity SID, and at least one of their sets of affected indices pass a specified check.
+	/// If the entity has no SID in its <see cref="Entity.SourceData"/>, uses the SIDs given by <see cref="EntityRegistry.GetKnownSidsFromType"/> instead.
+	/// </summary>
+	/// <param name="typeList">A dictionary containing C# short type names and entity SIDs as its keys, with hash sets containing their affected indices as its values.</param>
+	/// <param name="entity">An entity with the type or SID to locate in the type list.</param>
+	/// <param name="affectedIndicesCheck">A check to run on the type list's affected indices for the entity's type or SID.</param>
+	/// <returns> <see langword="true"/> if the type list contains the entity's C# short type name or SID and the affected indices for either of them pass the specified <paramref name="affectedIndicesCheck"/>; otherwise, <see langword="false"/>.</returns>
+	protected static bool TypeListContains(Dictionary<string, HashSet<int>> typeList, Entity entity, Func<HashSet<int>, bool> affectedIndicesCheck)
+	{
+		var type = entity.GetType();
+
+		if (typeList.TryGetValue(type.Name, out var affectedIndices) && affectedIndicesCheck(affectedIndices))
+			return true;
+
+		if (entity.SourceData?.Name is { } sourceSid
+			? typeList.TryGetValue(sourceSid, out affectedIndices) && affectedIndicesCheck(affectedIndices)
+			: EntityRegistry.GetKnownSidsFromType(type).Any(typeSid => typeList.TryGetValue(typeSid, out affectedIndices) && affectedIndicesCheck(affectedIndices)))
+			return true;
+
+		return false;
 	}
 
 	protected virtual bool WhitelistCheck(Entity entity)
 	{
-		if (Blacklist.Any(pair => pair.Item1 == entity.GetType().Name && pair.Item2 == -1))
-		{
+		if (TypeListContains(Blacklist, entity, affectedIndices => affectedIndices.Contains(-1)))
 			return false;
-		}
 
 		if (WhitelistAll)
-		{
 			return true;
-		}
-		else if (Whitelist.Count == 0)
-		{
+
+		if (Whitelist.Count == 0)
 			return !((DefaultIgnored?.Invoke(entity) ?? false) || entity is Player || entity is SolidTiles || entity is BackgroundTiles || entity is Decal || entity is Trigger || entity is WindController);
-		}
-		else
-		{
-			return Whitelist.Any(pair => pair.Item1 == entity.GetType().Name);
-		}
+
+		return TypeListContains(Whitelist, entity);
 	}
 
-	protected virtual bool WhitelistCheckCount(Entity entity, int count)
+	protected virtual bool WhitelistCheckIndex(Entity entity, int index)
 	{
-		if (Blacklist.Any(pair => pair.Item1 == entity.GetType().Name && (pair.Item2 == -1 || count == pair.Item2)))
-		{
+		if (TypeListContains(Blacklist, entity, affectedIndices => affectedIndices.Contains(-1) || affectedIndices.Contains(index)))
 			return false;
-		}
 
 		if (WhitelistAll || Whitelist.Count == 0)
-		{
 			return true;
-		}
-		else
-		{
-			return Whitelist.Any(pair => pair.Item1 == entity.GetType().Name && (pair.Item2 == -1 || count == pair.Item2));
-		}
+
+		return TypeListContains(Whitelist, entity, affectedIndices => affectedIndices.Contains(-1) || affectedIndices.Contains(index));
 	}
 
 	protected virtual void AttachInside(bool first = false)
 	{
 		if (first || (Mode != ContainMode.RoomStart && Mode != ContainMode.DelayedRoomStart))
 		{
-			var counts = new Dictionary<Type, int>();
+			var entityCountsInside = new Dictionary<Type, int>();
 			foreach (var entity in Scene.Entities)
 			{
 				if (entity != Entity && WhitelistCheck(entity) && (IsValid?.Invoke(entity) ?? true))
 				{
-					if (!counts.ContainsKey(entity.GetType()))
-					{
-						counts.Add(entity.GetType(), 0);
-					}
+					var entityType = entity.GetType();
+					entityCountsInside.TryAdd(entityType, 0);
 
 					var anyInside = false;
 					var handlers = EntityHandler.CreateAll(entity, this, ForceStandardBehavior);
@@ -286,7 +324,7 @@ public class EntityContainer : Component
 						{
 							anyInside = true;
 
-							if ((Mode != ContainMode.Always || !Contained.Contains(handler)) && WhitelistCheckCount(entity, counts[entity.GetType()] + 1))
+							if ((!Contained.Contains(handler) || Mode != ContainMode.Always) && WhitelistCheckIndex(entity, entityCountsInside[entityType] + 1))
 							{
 								AddContained(handler);
 								OnAttach?.Invoke(handler);
@@ -295,9 +333,7 @@ public class EntityContainer : Component
 					}
 
 					if (anyInside)
-					{
-						counts[entity.GetType()]++;
-					}
+						entityCountsInside[entityType]++;
 				}
 			}
 		}
@@ -317,9 +353,7 @@ public class EntityContainer : Component
 	{
 		var lastContained = new List<IEntityHandler>(Contained);
 		if (Mode == ContainMode.RoomStart || Mode == ContainMode.DelayedRoomStart)
-		{
 			containedSaved = lastContained;
-		}
 
 		foreach (var handler in lastContained)
 		{
@@ -353,39 +387,34 @@ public class EntityContainer : Component
 	public bool CheckCollision(Entity entity)
 	{
 		if (IgnoreContainerBounds)
-		{
 			return true;
-		}
 
-		if (entity.Collider != null)
-		{
-			var collidable = entity.Collidable;
-			var parentCollidable = Entity.Collidable;
-			entity.Collidable = true;
-			Entity.Collidable = true;
-			CollideWithContained = true;
-			var result = Entity.CollideCheck(entity);
-			CollideWithContained = false;
-			entity.Collidable = collidable;
-			Entity.Collidable = parentCollidable;
-			return result;
-		}
-		else
-		{
+		if (entity.Collider == null)
 			return entity.X >= Entity.Left && entity.Y >= Entity.Top && entity.X <= Entity.Right && entity.Y <= Entity.Bottom;
-		}
+
+		var collidable = entity.Collidable;
+		var parentCollidable = Entity.Collidable;
+		entity.Collidable = true;
+		Entity.Collidable = true;
+		CollideWithContained = true;
+
+		var result = Entity.CollideCheck(entity);
+
+		CollideWithContained = false;
+		entity.Collidable = collidable;
+		Entity.Collidable = parentCollidable;
+
+		return result;
 	}
 
 	internal bool CheckDecal(Decal decal)
 	{
 		if (decal.textures.Count == 0)
-		{
 			return false;
-		}
 
-		var m = decal.textures[0];
-		var r = new Rectangle((int)(decal.Position.X - (m.ClipRect.Width / 2)), (int)(decal.Position.Y - (m.ClipRect.Height / 2)), m.ClipRect.Width, m.ClipRect.Height);
-		return Collide.CheckRect(Entity, r);
+		var decalTexture = decal.textures[0];
+		var decalRect = new Rectangle((int)(decal.Position.X - (decalTexture.ClipRect.Width / 2)), (int)(decal.Position.Y - (decalTexture.ClipRect.Height / 2)), decalTexture.ClipRect.Width, decalTexture.ClipRect.Height);
+		return Collide.CheckRect(Entity, decalRect);
 	}
 
 	public Rectangle GetContainedBounds()
@@ -406,9 +435,8 @@ public class EntityContainer : Component
 	public void DestroyContained()
 	{
 		foreach (var handler in Contained)
-		{
 			handler.Destroy();
-		}
+
 		Contained.Clear();
 	}
 }

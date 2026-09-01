@@ -200,6 +200,16 @@ public class EntityContainer : Component
 		handler.OnDetach(this);
 	}
 
+	public virtual bool ContainsEntity(Entity entity)
+	{
+		foreach (IEntityHandler handler in Contained)
+		{
+			if (handler.Entity == entity) 
+				return true;
+		} 
+		return false;
+	}
+
 	protected List<Tuple<string, int>> ParseList(string list)
 	{
 		return list.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(entry =>

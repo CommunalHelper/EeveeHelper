@@ -327,7 +327,7 @@ public class HoldableContainer : Actor, IContainer
 				foreach (SeekerBarrier barrier in Scene.Tracker.GetEntities<SeekerBarrier>())
 				{
 					barrier.Collidable = true;
-					var collided = CollideCheck(barrier) && !_Container.GetEntities().Contains(barrier);
+					var collided = CollideCheck(barrier) && !_Container.ContainsEntity(barrier);
 					barrier.Collidable = false;
 
 					if (collided)
@@ -525,12 +525,12 @@ public class HoldableContainer : Actor, IContainer
 
 	public override bool IsRiding(Solid solid)
 	{
-		return HasGravity && !_Container.GetEntities().Contains(solid) && base.IsRiding(solid);
+		return HasGravity && !_Container.ContainsEntity(solid) && base.IsRiding(solid);
 	}
 
 	public override bool IsRiding(JumpThru jumpThru)
 	{
-		return HasGravity && !_Container.GetEntities().Contains(jumpThru) && base.IsRiding(jumpThru);
+		return HasGravity && !_Container.ContainsEntity(jumpThru) && base.IsRiding(jumpThru);
 	}
 
 	private IEnumerator DestroyRoutine()
